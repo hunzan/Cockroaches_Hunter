@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>第三關介紹 - 廁所浴室</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body { opacity: 0; transition: opacity .6s ease; }
+    body.ready { opacity: 1; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
+    h1,h2 { text-align:center; }
+    .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
+    .bug img {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+    @media (min-width: 768px) { .bug img { max-width: 320px; } }
+    @media (min-width: 1200px) { .bug img { max-width: 400px; } }
+    .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
+    #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
+  </style>
+  </head>
+  <body class="level-intro">
+  <main class="wrap">
+    <h1>第 3 關：廁所浴室</h1>
+        <!-- ★ 新增：NVDA / 螢幕報讀使用者提示 -->
+  <section aria-labelledby="a11yTitle">
+    <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
+    <p>
+      使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
+      <span class="kbd">NVDA</span> + <span class="kbd">空白</span>
+      切換到<strong>焦點模式</strong>，再使用方向鍵操作。
+    </p>
+    <ul>
+      <li>方向鍵：<span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> </li>
+      <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
+      <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖、<span class="kbd">4</span> 毒餌</li>
+      <li>攻擊：<span class="kbd">Enter</span></li>
+      <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
+    </ul>
+  </section>
+    <!-- 場地形式 -->
+    <section>
+      <h2>場地形式</h2>
+      <p>6 × 3 長方形格子地圖，可上下左右移動。</p>
+    </section>
+
+    <!-- 新蟑螂品種 -->
+    <section>
+      <h2>本關新蟑螂 🪳</h2>
+      <article class="bug" aria-label="主管強強棍">
+        <img src="assets/images/cockroaches/k3.png" alt="主管強強棍，一隻愛頤指氣使的蟑螂主管，穿西裝打領帶，指著別人出一張嘴發號施令。">
+        <div>
+          <h3>主管強強棍</h3>
+          <p>典型辦公室蟑螂，擅長打模糊仗、愛指揮下屬，叫聲是「加班」。<br>
+             弱點：<strong>毒餌</strong>、噴火槍。<br>
+             ⚠️注意：毒餌只能對付主管強強棍，對俗辣強與飛天強尼無效。</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- 操作方式 -->
+    <section>
+      <h2>操作方式</h2>
+      <ul>
+        <li>按 <span class="kbd">↑</span>  <span class="kbd">↓</span>  <span class="kbd">←</span>  <span class="kbd">→</span> 移動。</li>
+        <li>按 <span class="kbd">空白鍵</span> 掃描蟑螂位置。</li>
+        <li>按 <span class="kbd">1</span>  <span class="kbd">2</span>  <span class="kbd">3</span> 選擇武器（噴火槍、香氛噴霧、藍白拖）。</li>
+        <li>按 <span class="kbd">4</span> 選擇武器「毒餌」，僅對主管強強棍有效。</li>
+        <li>對準位置後，按 <span class="kbd">Enter</span> 攻擊。</li>
+      </ul>
+    </section>
+
+    <!-- 特殊提醒 -->
+    <section>
+      <h2>特別提醒</h2>
+      <p>地上會隨機出現 <strong>肥皂</strong>，若踩到會滑倒並扣血。請小心避開。</p>
+    </section>
+
+    <!-- 破關目標 -->
+    <section>
+      <h2>破關目標 🎯</h2>
+      <p>俗辣強 10 隻、飛天強尼 7 隻、主管強強棍 3 隻。</p>
+    </section>
+                <!-- ★ 新增：螢幕報讀提示（aria-live），讓 NVDA/JAWS 也會念到 -->
+    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
+
+    <button id="startBtn">進入第三關</button>
+  </main>
+
+  <!-- 背景圖＆音樂 -->
+  <style>
+    body { background: #000 url("assets/images/game_bg3.png") center/cover no-repeat fixed; }
+  </style>
+  <audio id="bgm"
+         src="assets/sounds/game_03.mp3"
+         loop
+         preload="auto"
+         autoplay
+         muted
+         playsinline></audio>
+
+  <script>
+    const bgm = document.getElementById('bgm');
+    const go  = () => window.location.href = "game_03.html";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+
+      // 嘗試以靜音自動播放
+      bgm.play().catch(()=>{});
+
+      // 語音解說（播放期間壓低 BGM 音量）
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance("第三關，廁所浴室。本關敵人：俗辣強、飛天強尼與主管強強棍。目標，俗辣強十隻，飛天強尼七隻，主管強強棍三隻。按下按鈕或 Enter 開始。");
+        u.lang = "zh-TW";
+        u.onstart = () => { bgm.volume = 0.25; };
+        u.onend   = () => { bgm.volume = 1;    };
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      }
+
+      // 任一互動 → 解除靜音並開始正常播 BGM
+      const enableSound = () => {
+        bgm.muted = false;
+        bgm.volume = 1;
+        bgm.play().catch(()=>{});
+        document.removeEventListener('click', enableSound);
+        document.removeEventListener('keydown', enableSound);
+        document.removeEventListener('touchstart', enableSound);
+      };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', go);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Enter') go(); });
+  </script>
+</body>
+</html>

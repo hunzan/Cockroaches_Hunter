@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>第 5 關：廚房飯廳（10×10） - 進擊的蟑螂</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="js/core/modes.js"></script>
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body{
+      margin:0; padding:0;
+      background:url("assets/images/game_bg5.png") no-repeat center center fixed;
+      background-size:cover;
+      font-family:sans-serif;
+      opacity:0; transition:opacity .6s ease;
+    }
+    body.ready{ opacity:1; }
+
+    /* 初始為 flex；進入 Grid 模式後由 ModeGrid 設為 CSS Grid 10×10 */
+    #gameArea{
+      display:flex;
+      justify-content:center;
+      margin:1rem auto;
+      gap:.5rem;
+    }
+    .tile{
+      width:50px; height:50px;
+      border:2px solid #333;
+      font-size:1.5rem; text-align:center; line-height:50px;
+      background:#eee;
+    }
+    .tile.player{ background:#cce5ff; }
+    .tile.bug{ background:#f8d7da; }
+
+    #touchControls{ margin:1rem auto; text-align:center; }
+    #touchControls button{ font-size:1rem; margin:.3rem; }
+    #message{ margin-top:1rem; font-weight:bold; text-align:center; }
+
+    .sr-only{
+      position:absolute!important; width:1px; height:1px;
+      padding:0; margin:-1px; overflow:hidden;
+      clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+        /* 勇者貼圖（右下角裝飾，不擋操作） */
+  .hero-sticker{
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    width: min(22vw, 180px);
+    max-width: 220px;
+    height: auto;
+    opacity: .95;
+    pointer-events: none;                 /* ★ 不攔截滑鼠/觸控 */
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+    z-index: 10;
+  }
+  @media (max-width: 480px){
+    .hero-sticker{ width: 28vw; opacity: .9; }
+  }
+  </style>
+</head>
+<body class="stage5">
+  <main>
+    <h1>廚房飯廳是最後的防線</h1>
+
+    <p id="a11yHelp" class="sr-only">
+      鍵盤操作：方向鍵移動；空白鍵掃描；Enter 攻擊；數字鍵 1 到 7 切換武器。
+      任何時候可按 Shift+S 朗讀目前狀態（血量、金幣、武器與可用次數）。
+      本關規則：可用金幣收買第 1 到第 3 階的蟑螂，俗辣強 1 枚、飛天強尼 3 枚、主管強強棍 5 枚。
+      軍師蟑到爆不能用金幣收買，需答題過關或用毒餌擊敗牠。
+      破關方法一：收買 20 隻俗辣強、10 隻飛天強尼、5 隻主管強強棍、以及 3 隻軍師蟑到爆，方可罷免蟑螂王。
+      破關方法二：玩家擁有金幣達 200 枚，可購買貓飼料養貓召喚貓咪擊退蟑螂王。
+      請盡量避開蟑螂王的攻擊；第 1 到第 4 項武器對祂無效。
+    </p>
+
+    <!-- 玩家狀態區塊 -->
+    <section id="playerStatus" aria-label="玩家狀態" style="margin: 1rem 0; font-weight: bold;">
+      <div>勇者：<span id="playerName">---</span></div>
+      <div>血量：<span id="playerHP">---</span></div>
+      <div>金幣：<span id="playerCoins">---</span></div>
+      <div class="ps-recall">罷免票：<span id="recallVotes">0</span> / <span id="recallNeed">10</span></div>
+      <div><span id="weaponStatus">---</span></div>
+
+      <!-- 給螢幕報讀器用的隱形摘要 -->
+      <div id="srStatus" aria-live="polite" aria-atomic="true" role="status" class="sr-only"></div>
+    </section>
+
+    <!-- 觸控控制 -->
+    <div id="touchControls" aria-label="觸控控制">
+      <button onclick="moveLeft()">⬅️ 左移</button>
+      <button onclick="moveRight()">➡️ 右移</button>
+      <button onclick="moveUp()">⬆️ 上</button>
+      <button onclick="moveDown()">⬇️ 下</button>
+      <button onclick="scanArea()">🔍 掃描</button>
+      <button onclick="attack()">🔥 攻擊</button>
+      <button onclick="changeWeapon('fire')">1️⃣ 噴火槍</button>
+      <button onclick="changeWeapon('spray')">2️⃣ 香氛噴霧</button>
+      <button onclick="changeWeapon('slipper')">3️⃣ 藍白拖</button>
+      <button onclick="changeWeapon('bait')">4️⃣ 毒餌</button>
+            <!-- NEW L5：三個新武器 -->
+      <button onclick="openCatPicker()">5️⃣ 養貓</button>
+      <button onclick="vote()">6️⃣ 罷免連署</button>
+      <button id="btnRecall" onclick="useRecall()" class="span2">7️⃣ 🗳️ 罷免 <small id="recallHint"></small></button>
+    </div>
+
+    <!-- 遊戲場地（10×10） -->
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="廚房飯廳戰鬥區：10乘10 格狀區域"></div>
+
+    <div id="message" aria-live="assertive"></div>
+
+    <!-- 播音用 audio -->
+    <audio id="voicePlayer" src="" hidden></audio>
+  </main>
+    <!-- NEW L5：貓咪介紹/領養對話框 -->
+  <div id="catDialog" class="sr-only" hidden aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="catTitle" aria-describedby="catDesc">
+    <div id="catPanel" style="position:fixed; inset:10% 15%; background:#fff; border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,.4); padding:1rem; overflow:auto;">
+      <h2 id="catTitle">養貓：選擇你的戰貓（每隻 200 金幣）</h2>
+      <p id="catDesc">選一隻貓咪加入你的隊伍，養貓成功後會成為針對蟑螂王的有效武器。可用 Tab 瀏覽，Enter 按下「領養」。按 Esc 可關閉。</p>
+      <div id="catGrid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px;">
+        <!-- 5 隻貓範例（用你的實際圖片路徑替換 src） -->
+        <div class="catCard" tabindex="0" data-cat="cat_01" style="border:1px solid #ddd; border-radius:10px; padding:.5rem;">
+          <img src="assets/images/cats/cat_01.png" alt="白貓 北下閜" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+          <h3 style="margin:.5rem 0 .25rem;">白貓 北下閜（Pe̍h-siak-siak）</h3>
+          <p style="margin:0 0 .5rem;">反應快、守門神。</p>
+          <button onclick="adoptCat('cat_01')">領養 200💰</button>
+        </div>
+        <div class="catCard" tabindex="0" data-cat="cat_02" style="border:1px solid #ddd; border-radius:10px; padding:.5rem;">
+          <img src="assets/images/cats/cat_02.png" alt="虎斑 阿后" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+          <h3 style="margin:.5rem 0 .25rem;">虎斑 阿后（A-hó）</h3>
+          <p style="margin:0 0 .5rem;">力氣大、壓制王。</p>
+          <button onclick="adoptCat('cat_02')">領養 200💰</button>
+        </div>
+        <div class="catCard" tabindex="0" data-cat="cat_03" style="border:1px solid #ddd; border-radius:10px; padding:.5rem;">
+          <img src="assets/images/cats/cat_03.png" alt="黑貓 歐罵瑪" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+          <h3 style="margin:.5rem 0 .25rem;">黑貓 歐罵瑪（O͘-mà-mà）</h3>
+          <p style="margin:0 0 .5rem;">冷靜、偷襲高手。</p>
+          <button onclick="adoptCat('cat_03')">領養 200💰</button>
+        </div>
+        <div class="catCard" tabindex="0" data-cat="cat_04" style="border:1px solid #ddd; border-radius:10px; padding:.5rem;">
+          <img src="assets/images/cats/cat_04.png" alt="三花貓 五告揮" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+          <h3 style="margin:.5rem 0 .25rem;">三花貓 五告揮（Ū-kàu Hoe）</h3>
+          <p style="margin:0 0 .5rem;">敏捷、連擊快。</p>
+          <button onclick="adoptCat('cat_04')">領養 200💰</button>
+        </div>
+        <div class="catCard" tabindex="0" data-cat="cat_05" style="border:1px solid #ddd; border-radius:10px; padding:.5rem;">
+          <img src="assets/images/cats/cat_05.png" alt="麒麟尾暹邏貓 帕嘎抓" style="width:100%; height:140px; object-fit:cover; border-radius:8px;">
+          <h3 style="margin:.5rem 0 .25rem;">麒麟尾暹邏貓 帕嘎抓（Phah Ka-choa̍h）</h3>
+          <p style="margin:0 0 .5rem;">深不可測、殺氣騰騰。</p>
+          <button onclick="adoptCat('cat_05')">領養 200💰</button>
+        </div>
+      </div>
+        <div class="dialog-actions" style="margin-top:1rem; text-align:right;">
+          <button class="dialog-close" id="catCloseBtn" type="button" onclick="closeCatPicker()">關閉</button>
+        </div>
+    </div>
+  </div>
+
+  <!-- 關卡 BGM -->
+  <audio id="bgm" src="assets/sounds/game_05.mp3" loop preload="auto"></audio>
+
+<script>
+(function () {
+  document.body.classList.add('ready');
+
+  // ===== BGM 互動解鎖 =====
+  const bgm = document.getElementById('bgm');
+  function tryPlay() {
+    bgm?.play().catch(() => {});
+    document.removeEventListener('click', tryPlay);
+    document.removeEventListener('keydown', tryPlay);
+    document.removeEventListener('touchstart', tryPlay);
+  }
+  document.addEventListener('click', tryPlay,   { once: true });
+  document.addEventListener('keydown', tryPlay, { once: true });
+  document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+
+  // ===== 養貓 Dialog：A11Y & Keyboard UX =====
+  const dialog = document.getElementById('catDialog');
+  const panel  = document.getElementById('catPanel');
+  if (!dialog || !panel) return;
+
+  // 初始隱藏（保險）
+  dialog.classList.add('sr-only');
+  dialog.setAttribute('hidden', '');
+  dialog.setAttribute('aria-hidden', 'true');
+
+  // ---- 捕獲階段保護：視窗開啟時，鍵盤事件不穿透到遊戲 ----
+  const captureKeys = (e) => {
+    const keys = ["Enter","Escape","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "];
+    if (!keys.includes(e.key)) return;
+
+    // 攔住事件：避免觸發 Core 的移動/攻擊
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Esc → 關窗
+    if (e.key === "Escape") {
+      if (typeof closeCatPicker === "function") closeCatPicker();
+      return;
+    }
+
+    // Enter → 若在關閉鈕，關窗；若在卡片，觸發領養；否則交由焦點元素自己處理（但不外傳）
+    if (e.key === "Enter") {
+      const el = document.activeElement;
+      if (el?.classList?.contains('dialog-close')) {
+        if (typeof closeCatPicker === "function") closeCatPicker();
+        return;
+      }
+      if (el?.classList?.contains('catCard')) {
+        el.querySelector('button')?.click();
+        return;
+      }
+    }
+
+    // 方向鍵在卡片間移動
+    const grid = document.getElementById('catGrid');
+    if (!grid) return;
+    const cards = Array.from(grid.querySelectorAll('.catCard'));
+    if (!cards.length) return;
+
+    const idx = cards.indexOf(document.activeElement);
+    if (idx < 0) return;
+
+    const cardW = cards[0].getBoundingClientRect().width || 200; // fallback
+    const cols  = Math.max(1, Math.round(grid.clientWidth / cardW)) || 4;
+
+    let next = null;
+    if (e.key === 'ArrowRight') next = cards[Math.min(cards.length - 1, idx + 1)];
+    if (e.key === 'ArrowLeft')  next = cards[Math.max(0, idx - 1)];
+    if (e.key === 'ArrowDown')  next = cards[Math.min(cards.length - 1, idx + cols)];
+    if (e.key === 'ArrowUp')    next = cards[Math.max(0, idx - cols)];
+    if (next) next.focus();
+  };
+
+  const enableCapture  = () => dialog.addEventListener('keydown', captureKeys, true);   // ★ capture=true
+  const disableCapture = () => dialog.removeEventListener('keydown', captureKeys, true);
+
+  // 開啟時自動聚焦到第一張卡片（或面板），並啟用捕獲
+  const isVisible = (el) => {
+    if (!el) return false;
+    if (el.hasAttribute('hidden') || el.getAttribute('aria-hidden') === 'true') return false;
+    if (el.classList.contains('sr-only')) return false;
+    const cs = window.getComputedStyle(el);
+    return !(cs.display === 'none' || cs.visibility === 'hidden' || cs.opacity === '0');
+  };
+  const focusFirstCard = () => {
+    const first = document.querySelector('#catGrid .catCard');
+    (first || panel).focus();
+  };
+  const mo = new MutationObserver(() => {
+    if (isVisible(dialog)) {
+      // 視窗剛顯示：聚焦 + 啟用捕獲
+      setTimeout(() => { focusFirstCard(); enableCapture(); }, 0);
+    } else {
+      // 視窗關閉：移除捕獲
+      disableCapture();
+    }
+  });
+  mo.observe(dialog, { attributes: true, attributeFilter: ['class', 'hidden', 'aria-hidden', 'style'] });
+
+  // 額外保險：當武器選到「養貓」且尚未領養時，按 Enter 也會打開視窗
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const G = window.game; if (!G) return;
+    if (G.state?.weapon === 'cat' && !G.state?.catOwned) {
+      if (typeof openCatPicker === 'function') {
+        openCatPicker();
+        e.preventDefault();
+      }
+    }
+  });
+})();
+</script>
+
+  <!-- 資料 -->
+  <script src="js/content/bugs.js"></script>
+  <script src="js/content/levels.js"></script>
+
+  <!-- 核心與模式（順序：core -> lane -> grid） -->
+  <script src="js/core/game-core.js"></script>
+  <script src="js/core/mode-lane.js"></script>
+  <script src="js/render/furniture.js"></script>
+  <script src="js/core/mode-grid.js"></script>
+
+  <script src="js/a11y/focus-hints.js"></script>
+  <script src="js/a11y/announce-arbiter.js"></script>
+  <script src="js/a11y/spawn-conductor.js"></script>
+
+  <!-- 問答與 K4 對話（順序很重要：quiz.js → 建立實例 → k4_dialog.js → wiring → boot） -->
+  <script src="js/core/quiz.js"></script>
+  <script>
+    // 建立全域題庫實例（路徑用你實際的 K4 題庫）
+    window.quiz = new window.QuizEngine({
+      dataUrl: 'assets/questions/questions_k4.json',
+      voiceLang: 'zh-TW',
+      enableTTS: true,
+      readChoicesOnOpen: true,
+      speakOnSelect: true
+    });
+
+    // 可選：先預載題庫，避免按 Enter 時才下載
+    document.addEventListener('game-ready', async () => {
+      try { await window.quiz.load(); } catch (e) {
+        console.warn('[k4] quiz.load 失敗', e);
+      }
+    });
+  </script>
+
+  <script src="js/core/k4_dialog.js"></script>
+  <script>
+  /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁（含 Quiz 兼容） === */
+  document.addEventListener('game-ready', () => {
+    // 1) 進場提示與自動聚焦（NVDA 焦點模式）
+    const stageEl = document.getElementById('gameArea');
+    window.__focusHints = A11YFocusHints.install({
+      stageEl,
+      // 不給 srEl 也行，模組會自建隱形 aria-live 容器（polite+atomic）
+      hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。',
+      // 預設 useSpeechSynthesis:false，避免和你的遊戲 TTS 打架
+    });
+
+    // 2) 狀態報讀仲裁（合併＋節流，避開 TTS/測驗語音 與 生怪半拍）
+    window.__arb = A11YArbiter.install({
+      hpEl:   document.getElementById('playerHP'),
+      coinEl: document.getElementById('playerCoins'),
+      wpnEl:  document.getElementById('weaponStatus'),
+      srEl:   document.getElementById('srStatus'),
+      // 讓仲裁器把「測驗念題/選項」也視為 TTS 忙碌
+      ttsBusyFn: () => {
+        const coreBusy  = (window.Core && typeof Core._speechDepth === 'number' && Core._speechDepth > 0);
+        const synthBusy = !!(window.speechSynthesis && speechSynthesis.speaking);
+        return coreBusy || synthBusy;
+      },
+      // 如需微調節奏可開放：
+      // coolDownMs: 1200, quietNeedMs: 400, checkInterval: 200,
+    });
+
+      // 安裝 SpawnConductor（把 srStatus 傳進來更精準）
+    window.__sc = SpawnConductor.install({
+      srEl: document.getElementById('srStatus'),
+      // waitTimeout: 2200, quietNeed: 300, poll: 60,
+      // 若有 quiz 語音，建議用與該關相同的 ttsBusyFn：
+      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
+    });
+  });
+
+    // Shift+S：只在遊戲進行時重唸最新狀態
+    document.addEventListener('keydown', (e)=>{
+      if (e.shiftKey && (e.key==='S'||e.key==='s')) {
+        if (window.gameActive) window.__arb?.poke();
+      }
+    });
+
+    // （可選）若 k4_dialog 有派發事件，可同步遊戲活動狀態
+    window.addEventListener('quiz-open',  () => { window.gameActive = false; });
+    window.addEventListener('quiz-close', () => { window.gameActive = true;  });
+
+  </script>
+
+  <script>
+  // 切頁或重載時，善後還原 role/tabindex 等
+  window.addEventListener('beforeunload', () => {
+    try { window.__focusHints?.destroy(); } catch(_){}
+  });
+  </script>
+  <script>
+  ;(() => {
+    "use strict";
+
+    // === 檔名 → 中文角色名（全部小寫 key） ===
+    const roleMap = {
+      "kinbah.png": "金巴",
+      "mailah.png": "麥拉",
+      "khaupe.png": "考盃",
+      "holah.png": "赫拉",
+      "chinaikhun.png": "金．艾捆",
+      "chiaulaipeh.png": "郊．萊北"
+    };
+
+    // 可靠取檔名（去 query/hash，轉小寫）
+    function fileKey(path){
+      if (!path || typeof path !== "string") return "";
+      const clean = path.split("#")[0].split("?")[0];
+      const file  = clean.split("/").pop() || "";
+      return file.toLowerCase();
+    }
+
+    // 讀玩家 → {name, roleName, avatarPath}
+    function readHero(){
+      let p = {};
+      try { p = JSON.parse(localStorage.getItem("bugSlayerPlayer") || "{}"); } catch {}
+      const name = p?.name || "無名勇者";
+      const avatarPath = p?.avatar || "";
+      const roleName = roleMap[fileKey(avatarPath)] || "未知勇者";
+      return { name, roleName, avatarPath };
+    }
+
+    // 初始化勇者 UI
+    function initHeroUI(){
+      const { name, roleName, avatarPath } = readHero();
+
+      // 勇者名稱（角色中文名．暱稱）
+      const elName = document.getElementById("playerName");
+      if (elName) elName.textContent = `${roleName}．${name}`;
+
+      // 右下角貼圖（裝飾）
+      let sticker = document.getElementById("heroSticker");
+      if (!sticker) {
+        sticker = document.createElement("img");
+        sticker.id = "heroSticker";
+        sticker.className = "hero-sticker";
+        sticker.alt = "";
+        sticker.setAttribute("aria-hidden", "true");
+        document.body.appendChild(sticker);
+      }
+      sticker.style.display = avatarPath ? "" : "none";
+      if (avatarPath) sticker.src = avatarPath;
+    }
+
+    // 攔截 Core.updateUI，每次都維持顯示「角色中文名．暱稱」
+    function patchUpdateUI(){
+      if (!window.Core || typeof Core.updateUI !== "function") return false;
+      if (Core.__patchedHeroName) return true;
+
+      const orig = Core.updateUI.bind(Core);
+      Core.updateUI = function(){
+        orig();
+        const { name, roleName } = readHero();
+        const elName = document.getElementById("playerName");
+        if (elName) elName.textContent = `${roleName}．${name}`;
+      };
+      Core.__patchedHeroName = true;
+      return true;
+    }
+
+    // 確保 patch 成功（事件 + 輪詢）
+    function ensurePatched(){
+      if (patchUpdateUI()) return;
+      const t0 = Date.now();
+      const timer = setInterval(() => {
+        if (patchUpdateUI() || Date.now() - t0 > 5000) clearInterval(timer);
+      }, 120);
+    }
+
+    document.addEventListener("DOMContentLoaded", initHeroUI);
+    document.addEventListener("game-ready", () => {
+      initHeroUI();
+      ensurePatched();
+    }, { once:true });
+    window.addEventListener("load", ensurePatched, { once:true });
+  })();
+  </script>
+  <!-- ★ 將 k4_dialog 綁進遊戲（保持精簡、交由 k4_dialog 接管流程） -->
+  <script>
+    document.addEventListener('game-ready', (e) => {
+      const game = e.detail?.game || window.game;
+      if (typeof window.bindK4Trigger === 'function')    window.bindK4Trigger(game);
+      if (typeof window.bindQuizHandlers === 'function') window.bindQuizHandlers(game);
+    });
+  </script>
+  <!-- 啟動腳本（第 5 關） -->
+  <script src="js/boot/game_l5.js"></script>
+  <script>
+    Modes.applyModeOnLoad();
+    Modes.bindQuickToggle();
+
+    // 若你有遊戲語音，模式切換時也可補一段說明：
+    document.addEventListener('keydown', (e)=>{
+      if (e.shiftKey && (e.key === 'M' || e.key === 'm')) {
+        // 這裡不用做別的，modes.js 會處理 TTS + aria 了
+      }
+    });
+  </script>
+  <script>
+  /* SRNoiseGate v1 — 全域關/開 live region，避免 NVDA 搶話 */
+  (function (w) {
+    'use strict';
+    // 你要「管控」的 live 元素（可視需求加）
+    const LIVE_SELECTORS = [
+      '#srStatus',  // 我們的狀態播報
+      '#message',   // 大多數關卡用來顯示提示/警示
+      '[role="status"][aria-live]',
+      '[aria-live="polite"]',
+      '[aria-live="assertive"]'
+    ];
+
+    // 取 DOM + 去重
+    function getLiveNodes() {
+      const set = new Set();
+      LIVE_SELECTORS.forEach(sel => {
+        document.querySelectorAll(sel).forEach(n => set.add(n));
+      });
+      return Array.from(set);
+    }
+
+    // 記住原本 aria-live，之後恢復
+    const original = new WeakMap();
+    function muteLiveRegions() {
+      getLiveNodes().forEach(n => {
+        if (!original.has(n)) original.set(n, n.getAttribute('aria-live') || '');
+        n.setAttribute('aria-live', 'off');
+      });
+      // 告訴 AT：頁面暫時忙，別念變更（輔助旗標）
+      document.body.setAttribute('aria-busy', 'true');
+    }
+    function unmuteLiveRegions() {
+      getLiveNodes().forEach(n => {
+        const v = original.get(n);
+        if (v === null || v === '') n.removeAttribute('aria-live');
+        else n.setAttribute('aria-live', v);
+      });
+      document.body.removeAttribute('aria-busy');
+    }
+
+    // 判斷 TTS 是否忙碌（Core 或瀏覽器 TTS 其一）
+    function ttsBusy() {
+      const coreBusy  = !!(w.Core && typeof Core._speechDepth === 'number' && Core._speechDepth > 0);
+      const synthBusy = !!(w.speechSynthesis && speechSynthesis.speaking);
+      return coreBusy || synthBusy;
+    }
+
+    // 監聽器：定期查看狀態轉變，只在「忙碌→空閒」「空閒→忙碌」時切換
+    (function startWatcher() {
+      let muted = false;
+      setInterval(() => {
+        const busy = ttsBusy();
+        if (busy && !muted) { muteLiveRegions(); muted = true; }
+        else if (!busy && muted) { unmuteLiveRegions(); muted = false; }
+      }, 120);
+    })();
+
+    // 若有 Quiz open/close 事件也一併掛上，進一步靜音
+    w.addEventListener?.('quiz-open',  muteLiveRegions);
+    w.addEventListener?.('quiz-close', unmuteLiveRegions);
+
+    // 退出頁面時清理
+    w.addEventListener?.('beforeunload', unmuteLiveRegions);
+  })(window);
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>進擊的蟑螂 - 開場</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      height: 100vh;
+      width: 100vw;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url("assets/images/start_bg.png") no-repeat center center/cover;
+      overflow: hidden;
+    }
+    #overlay {
+      text-align: center;
+      color: #fff;
+      font-size: 2rem;
+      text-shadow: 2px 2px 4px #000;
+      opacity: 0;                /* 初始隱藏 */
+      animation: fadeIn 3s forwards; /* 3 秒淡入 */
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay">
+    <h1>進擊的蟑螂</h1>
+    <p>按任意鍵開始</p>
+  </div>
+
+  <audio id="bgm" src="assets/sounds/start_theme.mp3"></audio>
+
+  <script>
+    const bgm = document.getElementById("bgm");
+    let started = false;
+
+    function startGame() {
+      if (started) return;
+      started = true;
+
+      // 觸發播放音效
+      bgm.play().catch(err => {
+        console.warn("音樂被瀏覽器阻擋：", err);
+      });
+
+      // 1 秒後轉 intro.html（留點時間讓音效響起）
+      setTimeout(() => {
+        window.location.href = "select_player.html";
+      }, 1000);
+    }
+
+    // 鍵盤或滑鼠點擊都能觸發
+    document.addEventListener("keydown", startGame);
+    document.addEventListener("click", startGame);
+  </script>
+</body>
+</html>

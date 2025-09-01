@@ -1,0 +1,78 @@
+
+window.bugs = [
+  {
+    id: "k1",
+    name: "俗辣強",
+    title: "偷偷摸摸的初階蟑螂",
+    description: "只敢趁沒人時溜出來偷吃東西，在地上悄悄爬。",
+    image: "assets/images/cockroaches/k1.png",
+    imageAlt: "一隻小型棕色蟑螂正在啃食麵包屑，觸鬚不停抖動，長得有點雖。",
+    sound: "assets/sounds/k1_hit.mp3",
+    health: 3,
+    weaknesses: ["fire", "spray", "slipper"],
+    voteCost: 1,
+    voteTicket: 1,
+    reward: { hp: 1, coins: 1, fire: 1, spray: 1, slipper: 1 },
+    damage: { hp: 1, coins: 1 }
+  },
+  {
+    id: "k2",
+    name: "飛天強尼",
+    title: "會飛的蟑螂空中霸王",
+    description: "靠勢自己會飛，專門嚇人，室內 10 坪內橫行無阻。",
+    image: "assets/images/cockroaches/k2.png",
+    imageAlt: "一隻全身肌肉發達的蟑螂，翅膀張開準備飛天、一副兇狠嚇唬人的表情。",
+    sound: "assets/sounds/k2_hit.mp3",
+    health: 5,
+    weaknesses: ["fire", "spray", "slipper"],
+    voteCost: 3,
+    voteTicket: 1,
+    reward: { hp: 3, coins: 3, fire: 2, spray: 2, slipper: 2 },
+    damage: { hp: 3, coins: 3 }
+  },
+  {
+    id: "k3",
+    name: "主管強強棍",
+    title: "愛發號施令的蟑螂中階主管",
+    description: "調度 3 公里內蟑螂員工開會搞事，出一張嘴叫別人做事很會。",
+    image: "assets/images/cockroaches/k3.png",
+    imageAlt: "一隻愛頤指氣使的蟑螂主管，穿西裝打領帶，一手叉腰，一手指著別人出一張嘴發號施令。",
+    sound: "assets/sounds/k3_hit.mp3",
+    health: 10,
+    weaknesses: ["fire", "bait"],
+    voteCost: 5,
+    voteTicket: 1,
+    reward: { hp: 5, coins: 5, fire: 3, spray: 3, slipper: 3, bait: 1 },
+    damage: { hp: 5, coins: 5 }
+  },
+  {
+    id: "k4",
+    name: "軍師蟑到爆",
+    title: "廚房廁所都要佔領的戰略型蟑螂",
+    description: "指揮10公里內蟑螂大軍侵略你家，戰術高明，領地感強。",
+    image: "assets/images/cockroaches/k4.png",
+    imageAlt: "一隻蟑螂軍師拿著人類住處室內平面圖，指揮低階蟑螂們如何進攻。",
+    sound: "assets/sounds/k4_hit.mp3",
+    health: 15,
+    weaknesses: ["puzzle_lose", "bait"],
+    voteCost: null,
+    voteTicket: 0,
+    reward: { hp: 10, coins: 10, fire: 7, spray: 7, slipper: 7, bait: 2 },
+    damage: { hp: 10, coins: 10 }
+  },
+  {
+    id: "k5",
+    name: "夭壽強",
+    title: "最高級別蟑螂王",
+    description: "體型如人、會飛會咬人，還會嫌你家東西難吃，是蟑螂族投票選舉出來的領導者。",
+    image: "assets/images/cockroaches/k5.png",
+    imageAlt: "一隻巨大蟑螂王直立如人，張嘴露出獠牙，一副獨裁者的架勢，拿著雞腿指揮蟑螂族們。",
+    sound: "assets/sounds/k5_hit.mp3",
+    health: 999,
+    weaknesses: ["vote", "cat"],
+    voteCost: null,
+    voteTicket: 0,
+    reward: { hp: 50, coins: 50, fire: 10, spray: 10, slipper: 10 },
+    damage: { hp: 50, coins: 50 }
+  }
+];

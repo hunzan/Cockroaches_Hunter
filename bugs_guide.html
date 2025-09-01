@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>蟑螂圖鑑</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body { margin: 0; padding: 0; background: #0b0b0b url("assets/images/start_bg.png") center/cover no-repeat fixed; color: #fff; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 1.2rem; }
+    h1 { margin: .5rem 0 1rem; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .card { background: rgba(0,0,0,.45); border: 1px solid #ffffff33; border-radius: 12px; padding: 12px; }
+    .card img { width: 100%; height: auto; border-radius: 10px; display: block; }
+    .meta { font-size: .95rem; line-height: 1.6; }
+    .tag { display: inline-block; margin-right: .4rem; margin-bottom: .2rem; padding: .1rem .5rem; border-radius: 999px; background: #ffffff22; font-size: .85rem; }
+    .btnbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn { background: #ffd452; color: #222; border: none; border-radius: 8px; padding: .5rem .9rem; cursor: pointer; }
+    .btn:hover { filter: brightness(1.05); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>蟑螂圖鑑</h1>
+    <p>出場角色與擊殺獎勵說明：</p>
+
+    <section class="grid" id="bugGrid" aria-label="蟑螂圖鑑卡片列表"></section>
+
+    <div class="btnbar">
+      <button class="btn" onclick="location.href='level_intro_01.html'">前往第 1 關</button>
+    </div>
+    <!-- 播音用 audio -->
+    <audio id="voicePlayer" src="" hidden></audio>
+  </main>
+  <audio id="bgm" src="assets/sounds/cockroach_intro.mp3" loop preload="auto"></audio>
+
+  <!-- 先載入資料 -->
+  <script src="js/content/bugs.js"></script>
+  <script>
+    (function () {
+      const bgm = document.getElementById('bgm');
+      function tryPlay() {
+        bgm?.play().catch(()=>{ /* 使用者還沒互動就算了 */ });
+        document.removeEventListener('click', tryPlay);
+        document.removeEventListener('keydown', tryPlay);
+        document.removeEventListener('touchstart', tryPlay);
+      }
+      document.addEventListener('click', tryPlay, { once: true });
+      document.addEventListener('keydown', tryPlay, { once: true });
+      document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+    })();
+  </script>
+<script>
+  // 統一的鍵→中文對照
+  const LABELS = {
+    fire: "噴火槍",
+    spray: "香氛噴霧",
+    slipper: "藍白拖",
+    flamethrower: "火焰噴射器",
+    bait: "毒餌",
+    vote: "被罷免",
+    puzzle_lose: "比猜謎輸掉",
+    cat: "貓"
+  };
+
+  // 把 reward 轉中文
+  function dropText(b) {
+    const r = b.reward || {};
+    const parts = [];
+    if (r.hp)    parts.push(`🩸 血量 +${r.hp}`);
+    if (r.coins) parts.push(`🪙 金幣 +${r.coins}`);
+    const possible = ["fire","spray","slipper","flamethrower","bait","poison_box","vote","cat"];
+    possible.forEach(k => { if (r[k]) parts.push(`${LABELS[k] || k} +${r[k]}`); });
+    return parts.length ? parts.join("、") : "—";
+  }
+
+  // 被咬後果
+  function damageText(b) {
+    const d = b.damage || {};
+    const parts = [];
+    if (d.hp)    parts.push(`🩸 血量 -${d.hp}`);
+    if (d.coins) parts.push(`🪙 金幣 -${d.coins}`);
+    return parts.length ? parts.join("、") : "—";
+  }
+
+  // ===== 新增：產生圖片替代文字 =====
+  function buildImageAlt(b) {
+    // 1) 若 bugs.js 提供 imageAlt，直接用（最推薦）
+    if (b.imageAlt && typeof b.imageAlt === 'string') return b.imageAlt.trim();
+
+    // 2) 沒給就用 fallback：描述外觀/動作，避免重複名稱
+    //   優先用 title/description 裡的可視內容；過長則截斷。
+    const bits = [];
+    // 從描述抓「可視覺的」片段（這裡先保守直接取 description）
+    if (b.description) bits.push(b.description.replace(/\s+/g, ' ').trim());
+    // 若有稱號 title，通常也是外觀/氣質
+    if (b.title) bits.push(b.title.replace(/\s+/g, ' ').trim());
+    let alt = bits.filter(Boolean).join("，");
+    // 太短時至少補一句「正在…」的動態（可依你的素材調整）
+    if (!alt) alt = "正在出沒中的蟑螂，姿勢詭祕。";
+    // 控制長度讓讀屏更順
+    if (alt.length > 120) alt = alt.slice(0, 118) + "…";
+    return alt;
+  }
+
+  (function renderGuide() {
+    const list = (window.bugs || []);
+    const grid = document.getElementById("bugGrid");
+    if (!grid) return;
+
+    grid.innerHTML = list.map(b => {
+      const weaknesses = (b.weaknesses || [])
+        .map(w => LABELS[w] || w)
+        .map(name => `<span class="tag">${name}</span>`).join("");
+
+      const imgAlt = buildImageAlt(b);
+
+      return `
+        <article class="card" role="article" aria-label="${b.name}">
+          <img src="${b.image}" alt="${imgAlt}" loading="lazy" decoding="async">
+          <h2 style="margin:.5rem 0 .25rem">${b.name}</h2>
+          <div class="meta">${b.title ? `${b.title}<br>` : ""}${b.description || ""}</div>
+          <div class="meta" style="margin-top:.4rem">弱點：${weaknesses || "—"}</div>
+          <div class="meta" style="margin-top:.4rem">被咬的後果：${damageText(b)}</div>
+          <div class="meta" style="margin-top:.4rem">擊殺獎勵：${dropText(b)}</div>
+        </article>
+      `;
+    }).join("");
+  })();
+</script>
+
+</body>
+</html>

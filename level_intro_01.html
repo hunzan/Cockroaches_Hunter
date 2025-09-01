@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>第一關介紹 - 儲藏室</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body { opacity: 0; transition: opacity .6s ease; }
+    body.ready { opacity: 1; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
+    h1,h2 { text-align:center; }
+    .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
+    .bug img {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+    @media (min-width: 768px) { .bug img { max-width: 320px; } }
+    @media (min-width: 1200px) { .bug img { max-width: 400px; } }
+    .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
+    #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
+        /* ★ 新增：僅給螢幕報讀的提示樣式（視覺隱藏） */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,1px,1px);
+      white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body class="level-intro">
+  <main class="wrap">
+    <h1>第 1 關：儲藏室</h1>
+        <!-- ★ 新增：NVDA / 螢幕報讀使用者提示 -->
+    <section aria-labelledby="a11yTitle">
+      <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
+      <p>
+        使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
+        <span class="kbd">NVDA</span> + <span class="kbd">空白</span>
+        切換到<strong>焦點模式</strong>，再使用方向鍵操作。
+      </p>
+      <ul>
+        <li>方向鍵：<span class="kbd">←</span> <span class="kbd">→</span>（本關僅左右）</li>
+        <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
+        <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖</li>
+        <li>攻擊：<span class="kbd">Enter</span></li>
+        <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
+      </ul>
+    </section>
+    <!-- 場地形式 -->
+    <section>
+      <h2>場地形式</h2>
+      <p>橫向 7 格走道，使用左右方向鍵平移。</p>
+    </section>
+
+    <!-- 敵人蟑螂 -->
+    <section>
+      <h2>本關將遇到的蟑螂</h2>
+      <article class="bug" aria-label="俗辣強">
+        <img src="assets/images/cockroaches/k1.png" alt="俗辣強，鬼鬼祟祟正在偷吃麵包的樣子，長得有點雖">
+        <div>
+          <h3>俗辣強</h3>
+          <p>最低階的小兵蟑螂，四處爬行、容易受驚嚇。<br>弱點：噴火槍、香氛噴霧、拖鞋。</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- 操作方式 -->
+    <section>
+      <h2>操作方式</h2>
+      <ul>
+        <li>按 <span class="kbd">←</span>  <span class="kbd">→</span> 移動角色。</li>
+        <li>按 <span class="kbd">空白鍵</span> 掃描蟑螂位置。</li>
+        <li>按 <span class="kbd">1</span>  <span class="kbd">2</span>  <span class="kbd">3</span> 選武器（噴火槍、香氛噴霧、藍白拖）。</li>
+        <li>對準位置後，按 <span class="kbd">Enter</span> 攻擊。</li>
+      </ul>
+    </section>
+        <!-- 破關目標 -->
+    <section>
+      <h2>破關目標 🎯</h2>
+      <p>俗辣強 10 隻。</p>
+    </section>
+        <!-- ★ 新增：螢幕報讀提示（aria-live），讓 NVDA/JAWS 也會念到 -->
+    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
+
+    <button id="startBtn">進入第一關</button>
+  </main>
+
+  <!-- 背景圖＆音樂 -->
+  <style>
+    body { background: #000 url("assets/images/game_bg1.png") center/cover no-repeat fixed; color:#fff; }
+  </style>
+
+  <audio id="bgm"
+         src="assets/sounds/game_01.mp3"
+         loop
+         preload="auto"
+         autoplay
+         muted
+         playsinline></audio>
+
+  <script>
+    const bgm = document.getElementById('bgm');
+    const srHint = document.getElementById('srHint');
+    const startBtn = document.getElementById('startBtn');
+
+    // 進關導向前，留下旗標給 game_01.html 做自動聚焦與二次提示
+    const go = () => {
+      try {
+        sessionStorage.setItem('needFocusModeHint', '1'); // ★ 新增
+      } catch (_) {}
+      window.location.href = "game_01.html";
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+
+      // 先讓 bgm 以「靜音」嘗試自動播放
+      bgm.play().catch(()=>{ /* 靜音自動播失敗就等等互動 */ });
+
+      // ★ 新增：給螢幕報讀的 aria-live 提示（不靠瀏覽器 TTS）
+      const hintText = "提示：進入關卡後，使用 NVDA 的玩家請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次 NVDA 加 空白。";
+      srHint.textContent = hintText;
+
+      // 語音說明：開始時把 bgm 音量壓低，結束再調回來
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance("第一關，儲藏室。本關敵人：最低階俗辣強。目標，消滅十隻。按下按鈕或 Enter 開始。");
+        u.lang = "zh-TW";
+        u.onstart = () => { bgm.volume = 0.25; };
+        u.onend   = () => { bgm.volume = 1;    };
+        speechSynthesis.cancel();
+        speechSynthesis.speak(u);
+      }
+
+      // 任一互動 → 解除靜音（之後就聽得到）
+      const enableSound = () => {
+        bgm.muted = false;
+        bgm.volume = 1;
+        bgm.play().catch(()=>{});
+        document.removeEventListener('click', enableSound);
+        document.removeEventListener('keydown', enableSound);
+        document.removeEventListener('touchstart', enableSound);
+      };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
+
+      // ★ 新增：讓鍵盤使用者先聚焦到「進入第一關」按鈕，方便直接 Enter
+      startBtn.focus({ preventScroll: true });
+    });
+
+    startBtn.addEventListener('click', go);
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); go(); }
+    });
+  </script>
+</body>
+</html>

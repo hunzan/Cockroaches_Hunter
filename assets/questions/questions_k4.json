@@ -1,0 +1,342 @@
+[
+  {
+    "id": "k4-0001",
+    "type": "mcq",
+    "prompt": "捷運台北車站藍線往東會經過哪一站？",
+    "prompt_tts": "問題：捷運台北車站藍線往東會經過哪一站？",
+    "choices": [
+      {"text": "忠孝新生", "aria": "選項一，忠孝新生"},
+      {"text": "西門", "aria": "選項二，西門"},
+      {"text": "頂溪", "aria": "選項三，頂溪"}
+    ],
+    "answer_index": 0,
+    "locale": "zh-TW",
+    "randomize": true,
+    "time_limit_sec": 60,
+    "points": 10,
+    "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0002",
+  "type": "mcq",
+  "prompt": "捷運淡水站是哪一條捷運線的靠北終點站？",
+  "prompt_tts": "問題：捷運淡水站是哪一條捷運線的靠北終點站？",
+  "choices": [
+    {"text": "綠線", "aria": "選項一，綠線"},
+    {"text": "紅線", "aria": "選項二，紅線"},
+    {"text": "棕線", "aria": "選項三，棕線"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0003",
+  "type": "mcq",
+  "prompt": "捷運美麗島站位於高捷橘線和哪一線交會？",
+  "prompt_tts": "問題：捷運美麗島站位於高捷橘線和哪一線交會？",
+  "choices": [
+    {"text": "綠線", "aria": "選項一，綠線"},
+    {"text": "白線", "aria": "選項二，白線"},
+    {"text": "紅線", "aria": "選項三，紅線"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0004",
+  "type": "mcq",
+  "prompt": "高雄捷運衛武營站位於哪條線上？",
+  "prompt_tts": "問題：高雄捷運衛武營站位於哪條線上？",
+  "choices": [
+    {"text": "黑線", "aria": "選項一，黑線"},
+    {"text": "橘線", "aria": "選項二，橘線"},
+    {"text": "三條線", "aria": "選項三，三條線"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0005",
+  "type": "mcq",
+  "prompt": "台北士林夜市是位在哪一個捷運站附近？",
+  "prompt_tts": "問題：台北士林夜市是位在哪一個捷運站附近？",
+  "choices": [
+    {"text": "士林站", "aria": "選項一，士林站"},
+    {"text": "衛武營站", "aria": "選項二，衛武營站"},
+    {"text": "劍潭站", "aria": "選項三，劍潭站"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0006",
+  "type": "mcq",
+  "prompt": "高雄瑞豐夜市離哪個捷運站近？",
+  "prompt_tts": "問題：高雄瑞豐夜市離哪個捷運站近？",
+  "choices": [
+    {"text": "前金站", "aria": "選項一，前金站"},
+    {"text": "三多商圈站", "aria": "選項二，三多商圈站"},
+    {"text": "巨蛋站", "aria": "選項三，巨蛋站"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0007",
+  "type": "mcq",
+  "prompt": "台中捷運烏日站靠近哪一個台鐵火車站？",
+  "prompt_tts": "問題：台中捷運烏日站靠近哪一個台鐵火車站？",
+  "choices": [
+    {"text": "烏日站", "aria": "選項一，烏日站"},
+    {"text": "新烏日站", "aria": "選項二，新烏日站"},
+    {"text": "大慶站", "aria": "選項三，大慶站"}
+  ],
+  "answer_index": 0,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0008",
+  "type": "mcq",
+  "prompt": "台中家樂福文心店位在哪個捷運站附近？",
+  "prompt_tts": "問題：台中家樂福文心店位在哪個捷運站附近？",
+  "choices": [
+    {"text": "文心中清站", "aria": "選項一，文心中清站"},
+    {"text": "水安宮站", "aria": "選項二，水安宮站"},
+    {"text": "市政府站", "aria": "選項三，市政府站"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-0009",
+  "type": "mcq",
+  "prompt": "想去高雄85大樓，要搭哪條捷運線哪個站？",
+  "prompt_tts": "問題：想去高雄85大樓，要搭哪條捷運線哪個站？",
+  "choices": [
+    {"text": "綠線，夢時代站", "aria": "選項一，綠線，夢時代站"},
+    {"text": "紅線，三多商圈站", "aria": "選項二，紅線，三多商圈站"},
+    {"text": "橘線，文化中心站", "aria": "選項三，橘線，文化中心站"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00010",
+  "type": "mcq",
+  "prompt": "Excuse me, 請問桃園機場捷運線直達車可到的站是哪個？",
+  "prompt_tts": "問題：Excuse me, 請問桃園機場捷運線直達車可到的站是哪個？",
+  "choices": [
+    {"text": "新北產業園區站", "aria": "選項一，新北產業園區站"},
+    {"text": "林口站", "aria": "選項二，林口站"},
+    {"text": "高鐵桃園站", "aria": "選項三，高鐵桃園站"}
+  ],
+  "answer_index": 0,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00011",
+  "type": "mcq",
+  "prompt": "美琴家門口面向北方，當她出門左轉並靠右走，是朝什麼方向？",
+  "prompt_tts": "問題：美琴家門口面向北方，當她出門左轉並靠右走，是朝什麼方向？",
+  "choices": [
+    {"text": "靠北往西方", "aria": "選項一，靠北往西方"},
+    {"text": "靠東往南方", "aria": "選項二，靠東往南方"},
+    {"text": "座北朝南", "aria": "選項三，座北朝南"}
+  ],
+  "answer_index": 0,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00012",
+  "type": "mcq",
+  "prompt": "出門在外最重要的就是廁所了，搭哪一種交通工具會有廁所？",
+  "prompt_tts": "問題：出門在外最重要的就是廁所了，搭哪一種交通工具會有廁所？",
+  "choices": [
+    {"text": "市區公車", "aria": "選項一，市區公車"},
+    {"text": "輕軌車廂", "aria": "選項二，輕軌車廂"},
+    {"text": "台鐵自強號", "aria": "選項三，台鐵自強號"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00013",
+  "type": "mcq",
+  "prompt": "台鐵列車月台有分北上和南下，哪個是南下？",
+  "prompt_tts": "問題：台鐵列車月台有分北上和南下，哪個是南下？",
+  "choices": [
+    {"text": "左營往新營", "aria": "選項一，左營往新營"},
+    {"text": "竹北往竹南", "aria": "選項二，竹北往竹南"},
+    {"text": "板橋往南港", "aria": "選項三，板橋往南港"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00014",
+  "type": "mcq",
+  "prompt": "哪個車站是捷運、台鐵、高鐵三鐵共構？",
+  "prompt_tts": "問題：哪個車站是捷運、台鐵、高鐵三鐵共構？",
+  "choices": [
+    {"text": "板橋車站", "aria": "選項一，板橋車站"},
+    {"text": "台中車站", "aria": "選項二，台中車站"},
+    {"text": "高雄車站", "aria": "選項三，高雄車站"}
+  ],
+  "answer_index": 0,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00015",
+  "type": "mcq",
+  "prompt": "右前方大概是指幾點鐘方向？",
+  "prompt_tts": "問題：右前方大概是指幾點鐘方向？",
+  "choices": [
+    {"text": "五點", "aria": "選項一，五點"},
+    {"text": "兩點", "aria": "選項二，兩點"},
+    {"text": "八點", "aria": "選項三，八點"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00016",
+  "type": "mcq",
+  "prompt": "本來往西南方走，右轉 90 度變成面向什麼方向？",
+  "prompt_tts": "問題：本來往西南方走，右轉 90 度變成面向什麼方向？",
+  "choices": [
+    {"text": "北北東", "aria": "選項一，北北東"},
+    {"text": "東南東", "aria": "選項二，東南東"},
+    {"text": "西北方", "aria": "選項三，西北方"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00017",
+  "type": "mcq",
+  "prompt": "高鐵嘉義站在嘉義的哪裡？",
+  "prompt_tts": "問題：高鐵嘉義站在嘉義的哪裡？",
+  "choices": [
+    {"text": "朴子", "aria": "選項一，朴子"},
+    {"text": "太保", "aria": "選項二，太保"},
+    {"text": "北港", "aria": "選項三，北港"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00018",
+  "type": "mcq",
+  "prompt": "哪一個是淡水輕軌的站名？",
+  "prompt_tts": "問題：哪一個是淡水輕軌的站名？",
+  "choices": [
+    {"text": "新市一路站", "aria": "選項一，新市一路站"},
+    {"text": "關渡站", "aria": "選項二，關渡站"},
+    {"text": "真愛碼頭站", "aria": "選項三，真愛碼頭站"}
+  ],
+  "answer_index": 0,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00019",
+  "type": "mcq",
+  "prompt": "從高雄車站搭哪一班捷運可到高雄國際機場？",
+  "prompt_tts": "問題：從高雄車站搭哪一班捷運可到高雄國際機場？",
+  "choices": [
+    {"text": "橘線往哈瑪星", "aria": "選項一，橘線往哈瑪星"},
+    {"text": "紅線往岡山車站", "aria": "選項二，紅線往岡山車站"},
+    {"text": "紅線往小港", "aria": "選項三，紅線往小港"}
+  ],
+  "answer_index": 2,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  },
+  {
+  "id": "k4-00020",
+  "type": "mcq",
+  "prompt": "哪一個火車站是三個裡面最南邊的？",
+  "prompt_tts": "問題：哪一個車站是三個裡面最南邊的？",
+  "choices": [
+    {"text": "豐原車站", "aria": "選項一，豐原車站"},
+    {"text": "斗六車站", "aria": "選項二，斗六車站"},
+    {"text": "彰化車站", "aria": "選項三，彰化車站"}
+  ],
+  "answer_index": 1,
+  "locale": "zh-TW",
+  "randomize": true,
+  "time_limit_sec": 60,
+  "points": 10,
+  "penalty_on_wrong": {"hp": 10, "coins": 5}
+  }
+]

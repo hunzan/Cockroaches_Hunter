@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>遊戲說明 - 進擊的蟑螂戰鬥遊戲</title>
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ===== 神秘黑底：只影響本頁 ===== */
+    body {
+      margin: 0;
+      color: #fff;
+      background: #000;        /* 強制黑底 */
+      position: relative;      /* 給 ::before 疊層用 */
+      overflow-x: hidden;
+    }
+    /* 背景暈影 + 微亮中心 */
+    body::before{
+      content:"";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        radial-gradient(80% 60% at 50% 35%, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(120% 80% at 50% 120%, rgba(0,0,0,0.85) 10%, rgba(0,0,0,1) 70%);
+      background-blend-mode: screen, normal;
+    }
+
+    /* ===== Skip link：預設藏好，聚焦滑入 ===== */
+    a.skip-link{
+      position: fixed;
+      left: 16px;
+      top: 12px;
+      transform: translateY(-150%);
+      background:#000; color:#fff;
+      padding:.5rem .75rem; border-radius:10px;
+      border:2px solid #ffd166;
+      box-shadow:0 4px 18px rgba(0,0,0,.45);
+      z-index:10000;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    a.skip-link:focus, a.skip-link:focus-visible{
+      transform: translateY(0);
+      outline: none;
+      box-shadow:0 6px 24px rgba(0,0,0,.6);
+    }
+
+    /* ===== 主要容器：玻璃感卡片 ===== */
+    main {
+      max-width: 1000px;
+      margin: 3rem auto;
+      padding: 1.25rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 16px;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+      opacity: 0;                  /* 主內容淡入 */
+      animation: fadeInMain .7s ease-out forwards;
+    }
+    @keyframes fadeInMain { to { opacity: 1; } }
+
+    /* ========= 裝備卡片區塊（上半部） ========= */
+    .equip { margin-top: 1.25rem; }
+    .equip h2 {
+      margin: 0 0 .4rem;
+      position: relative;
+      text-shadow: 0 2px 10px rgba(0,0,0,.7);
+    }
+    .equip h2::after {
+      content: "";
+      display: block;
+      width: 140px;
+      height: 3px;
+      margin-top: .45rem;
+      background: linear-gradient(90deg, #ffd166, rgba(255,209,102,0));
+      border-radius: 2px;
+    }
+
+    .equip-grid {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 2rem;                 /* 卡片間距 */
+      margin-top: 1rem;
+    }
+
+    .item {
+      flex: 1 1 240px;           /* 每張卡片最小寬，自動換行 */
+      max-width: 280px;
+      text-align: left;
+      background: rgba(255,255,255,0.08);                 /* 調亮一點配黑底 */
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 14px;
+      padding: 1rem;
+      backdrop-filter: blur(4px);
+      box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+      transition: transform .2s ease;
+    }
+    .item:hover { transform: translateY(-3px); }
+
+    .item figure { margin: 0; }
+    .item img {
+      max-width: 240px;          /* 圖片放大 */
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+      margin: 0 auto 0.8rem;
+      display: block;
+      background: rgba(255,255,255,0.08);
+      padding: .35rem;
+    }
+    .item figcaption { font-weight: 700; margin-bottom: .25rem; }
+
+    /* ========= 其它區塊 ========= */
+    .sr-actions{
+      display:flex; gap:.5rem; flex-wrap:wrap; align-items:center;
+      margin:.25rem 0 1rem;
+    }
+    .sr-btn{
+      appearance:none; border:1px solid rgba(255,255,255,.28);
+      background:rgba(255,255,255,.12); color:#fff; border-radius:10px;
+      padding:.35rem .6rem; cursor:pointer;
+    }
+    .sr-btn:focus-visible{ outline:2px solid #ffd166; outline-offset:2px; }
+
+    ul { line-height: 1.8; margin: .4rem 0 0; }
+    #startBtn {
+      margin-top: 2rem;
+      font-size: 1.2rem;
+      padding: 0.5rem 1.5rem;
+      border-radius: 999px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    /* 螢幕報讀用狀態區（不佔版面） */
+    .sr-only {
+      position:absolute!important; width:1px;height:1px; padding:0;margin:-1px;
+      overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+    }
+  </style>
+</head>
+<body class="guide">
+  <a href="#main" class="skip-link">跳到主內容</a>
+
+  <main id="main">
+    <h1>遊戲說明</h1>
+
+    <section class="equip" aria-labelledby="equipTitle">
+      <h2 id="equipTitle">勇者的初始裝備</h2>
+      <div class="sr-actions">
+        <button class="sr-btn" id="readEquip" aria-keyshortcuts="1">朗讀本節（快捷鍵 1）</button>
+        <span id="srStatus" class="sr-only" aria-live="polite"></span>
+      </div>
+
+      <div class="equip-grid">
+        <div class="item">
+          <figure>
+            <img src="assets/images/weapons/firegun.png"
+                 alt="一把噴火槍正在火烤蟑螂的畫面。">
+            <figcaption tabindex="0">
+              <span class="sr-only">噴火槍</span>
+            </figcaption>
+          </figure>
+          <p>🔥 噴火槍：起始值有 10 次，讓蟑螂們變成烤小強。</p>
+        </div>
+        <div class="item">
+          <figure>
+            <img src="assets/images/weapons/spray.png"
+                 alt="一罐香氛噴霧正在噴蟑螂，蟑螂們倒地抽搐的畫面。">
+            <figcaption tabindex="0">
+              <span class="sr-only">香氛噴霧</span>
+            </figcaption>
+          </figure>
+          <p>🌸 香氛噴霧：起始值有 10 次，人類覺得香，蟑螂聞了超想吐。</p>
+        </div>
+        <div class="item">
+          <figure>
+            <img src="assets/images/weapons/slipper.png"
+                 alt="藍白拖打中蟑螂噴汁的畫面。">
+            <figcaption tabindex="0">
+              <span class="sr-only">藍白拖</span>
+            </figcaption>
+
+          </figure>
+          <p>🩴 藍白拖：近距離必殺，命中瞬間爆擊噴汁，起始值可使用 10 次。</p>
+        </div>
+      </div>
+    </section>
+
+    <section aria-labelledby="controlTitle">
+      <h2 id="controlTitle">操作方式</h2>
+      <div class="sr-actions">
+        <button class="sr-btn" id="readControl" aria-keyshortcuts="2">朗讀本節（快捷鍵 2）</button>
+      </div>
+      <ul id="controlList">
+        <li>移動角色位置：使用箭頭 ← 、 → 、 ↑ 、 ↓</li>
+        <li>掃描目前區域是否有蟑螂：空白鍵</li>
+        <li>切換武器：數字 1 噴火槍、數字 2 香氛噴霧、數字 3 藍白拖，4 到 7 數字鍵在第四、五關依序解鎖。</li>
+        <li>發動攻擊：Enter 鍵</li>
+        <li>語音朗讀玩家目前狀態：Shift + S</li>
+        <li>切換畫面與純聽覺操作模式：Shift + M</li>
+      </ul>
+    </section>
+
+    <section aria-labelledby="tipsTitle">
+      <h2 id="tipsTitle">重要提示</h2>
+      <div class="sr-actions">
+        <button class="sr-btn" id="readTips" aria-keyshortcuts="3">朗讀本節（快捷鍵 3）</button>
+      </div>
+      <ul id="tipsList">
+        <li>遊戲共五關，難度會愈來愈高，出現的蟑螂種類也會增加，愈難對付。</li>
+        <li>不同蟑螂怕的武器不同，請留意每關開頭的說明，要聰明選擇！</li>
+        <li>攻擊失誤會被蟑螂反擊，小心扣血或損失金幣。</li>
+        <li>若在有特殊障礙物的情境，也請小心扣血或損失金幣。</li>
+        <li>血量歸零或被蟑螂王 咬 5 次，遊戲就會結束。</li>
+      </ul>
+    </section>
+            <!-- NVDA 使用建議（僅本頁顯示一次） -->
+    <section aria-labelledby="nvdaTitle">
+      <h2 id="nvdaTitle">NVDA 使用建議</h2>
+      <div class="sr-actions">
+        <button class="sr-btn" id="readNVDA" aria-keyshortcuts="4">朗讀本節（快捷鍵 4）</button>
+      </div>
+      <ul id="nvdaTips">
+        <li>進入關卡後，請按 <kbd>NVDA</kbd> + <kbd>空白鍵</kbd> 切換到「焦點模式」，再用方向鍵操作。</li>
+        <li>若覺得報讀太吵，可按 <kbd>NVDA</kbd> + <kbd>S</kbd> 在「朗讀／提示音／靜音」間切換。</li>
+        <li>遊戲內建的 TTS 會報讀蟑螂座標與關鍵事件；NVDA 報讀只是輔助，干擾時可暫時關閉。</li>
+      </ul>
+    </section>
+
+    <button id="startBtn" aria-describedby="startDesc">遊戲開始前先來認識敵人</button>
+    <span id="startDesc" class="sr-only">按下將前往蟑螂圖鑑與教學頁。</span>
+  </main>
+
+  <!-- 背景音樂（說明頁專用） -->
+  <audio id="bgm" src="assets/sounds/tutorial_theme.mp3" loop preload="auto"></audio>
+
+<script>
+  // ===== 可選的語音合成（提供鍵盤快速朗讀）=====
+  function speak(text){
+    if (!('speechSynthesis' in window) || !text) return;
+    try{
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.lang = "zh-TW"; u.rate = 1.5; u.pitch = 1.0; u.volume = 1.0;
+      speechSynthesis.speak(u);
+    }catch(_){}
+  }
+  function sectionText(el){
+    if (!el) return "";
+    // 抓取該節的文字（標題 + 列表/段落）
+    let t = "";
+    const h2 = el.querySelector('h2');
+    if (h2) t += h2.textContent + "。";
+    const ps = el.querySelectorAll('p, li');
+    ps.forEach(p => t += p.textContent + "。");
+    return t;
+  }
+  function live(msg){
+    const sr = document.getElementById('srStatus');
+    if (sr) sr.textContent = msg || "";
+  }
+
+  // 朗讀各節：按鈕 + 數字鍵
+  const secEquip = document.querySelector('.equip');
+  const secCtrl  = document.querySelector('[aria-labelledby="controlTitle"]');
+  const secTips  = document.querySelector('[aria-labelledby="tipsTitle"]');
+  document.getElementById('readEquip')?.addEventListener('click', ()=>{
+    const txt = sectionText(secEquip); speak(txt); live('已朗讀：初始裝備。');
+  });
+  document.getElementById('readControl')?.addEventListener('click', ()=>{
+    const txt = sectionText(secCtrl); speak(txt); live('已朗讀：操作方式。');
+  });
+  document.getElementById('readTips')?.addEventListener('click', ()=>{
+    const txt = sectionText(secTips); speak(txt); live('已朗讀：重要提示。');
+  });
+
+  const secNVDA = document.querySelector('[aria-labelledby="nvdaTitle"]');
+  document.getElementById('readNVDA')?.addEventListener('click', ()=>{
+    const txt = sectionText(secNVDA); speak(txt); live('已朗讀：NVDA 使用建議。');
+  });
+
+  document.addEventListener('keydown', (e)=>{
+    if (e.altKey || e.ctrlKey || e.metaKey) return;
+    if (e.key === '1') { e.preventDefault(); document.getElementById('readEquip')?.click(); }
+    else if (e.key === '2') { e.preventDefault(); document.getElementById('readControl')?.click(); }
+    else if (e.key === '3') { e.preventDefault(); document.getElementById('readTips')?.click(); }
+    else if (e.key === '4') { e.preventDefault(); document.getElementById('readNVDA')?.click(); }
+  });
+
+  // ===== 背景音樂：互動後播放 + 淡入（保留）=====
+  (function () {
+    const bgm = document.getElementById("bgm");
+    if (!bgm) return;
+
+    let armed = false;
+    function fadeInAudio(audio, target = 0.6, durMs = 900) {
+      audio.volume = 0;
+      const steps = 18, delta = target / steps, stepMs = Math.ceil(durMs / steps);
+      let i = 0;
+      const timer = setInterval(() => {
+        i++;
+        audio.volume = Math.min(target, audio.volume + delta);
+        if (i >= steps) clearInterval(timer);
+      }, stepMs);
+    }
+    function armAndPlay() {
+      if (armed) return;
+      armed = true;
+      bgm.play().then(() => { fadeInAudio(bgm, 0.6, 900); }).catch(()=>{});
+    }
+    document.addEventListener("click", armAndPlay, { once: true });
+    document.addEventListener("keydown", armAndPlay, { once: true });
+    document.addEventListener("touchstart", armAndPlay, { once: true, passive: true });
+    window.addEventListener("beforeunload", () => { try { bgm.pause(); } catch(e) {} });
+  })();
+
+  // ===== 開始遊戲按鈕 =====
+  document.getElementById("startBtn").addEventListener("click", () => {
+    window.location.href = "bugs_guide.html";
+  });
+</script>
+
+</body>
+</html>

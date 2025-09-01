@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <title>第 2 關：主臥室（9 宮格） - 進擊的蟑螂</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="js/core/modes.js"></script>
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: url("assets/images/game_bg2.png") no-repeat center center fixed;
+      background-size: cover;
+      font-family: sans-serif;
+      opacity: 0;
+      transition: opacity .6s ease;
+    }
+    body.ready { opacity: 1; }
+
+    #gameArea {
+      /* 初始樣式；實際顯示由 ModeGrid 以 inline style 設定為 grid */
+      display: flex;
+      justify-content: center;
+      margin: 1rem auto;
+      gap: 0.5rem;
+    }
+    .tile {
+      width: 50px;
+      height: 50px;
+      border: 2px solid #333;
+      font-size: 1.5rem;
+      text-align: center;
+      line-height: 50px;
+      background-color: #eee;
+    }
+    .tile.player { background-color: #cce5ff; }
+    .tile.bug    { background-color: #f8d7da; }
+
+    #touchControls {
+      margin: 1rem auto;
+      text-align: center;
+    }
+    #touchControls button { font-size: 1rem; margin: 0.3rem; }
+
+    #message { margin-top: 1rem; font-weight: bold; text-align: center; }
+
+    /* 給螢幕閱讀器的隱藏文字樣式 */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0);
+      white-space: nowrap; border: 0;
+    }
+        /* 勇者貼圖（右下角裝飾，不擋操作） */
+  .hero-sticker{
+    position: fixed;
+    right: 12px;
+    bottom: 12px;
+    width: min(22vw, 180px);
+    max-width: 220px;
+    height: auto;
+    opacity: .95;
+    pointer-events: none;                 /* ★ 不攔截滑鼠/觸控 */
+    filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+    z-index: 10;
+  }
+  @media (max-width: 480px){
+    .hero-sticker{ width: 28vw; opacity: .9; }
+  }
+  </style>
+</head>
+<body class="stage2">
+  <main>
+    <h1>床上好像有什麼東西在爬...</h1>
+    <h1>啊！牠會飛！</h1>
+    <p class="sr-only" id="a11yHelp">
+      鍵盤操作：方向鍵上下左右移動；空白鍵掃描；Enter 攻擊；數字鍵 1 到 3 切換武器。
+      任何時候可按 Shift+S 朗讀目前狀態（血量、金幣、武器與可用次數）。
+    </p>
+
+    <!-- 玩家狀態 -->
+    <section id="playerStatus" aria-label="玩家狀態" style="margin: 1rem 0; font-weight: bold;">
+      <div>勇者：<span id="playerName">---</span></div>
+      <div>血量：<span id="playerHP">---</span></div>
+      <div>金幣：<span id="playerCoins">---</span></div>
+      <div><span id="weaponStatus">---</span></div>
+              <!-- 給螢幕報讀器用的隱形摘要 -->
+      <div id="srStatus" aria-live="polite" aria-atomic="true" role="status" class="sr-only"></div>
+    </section>
+
+    <!-- 觸控控制 -->
+    <div id="touchControls" aria-label="觸控控制">
+      <button onclick="moveLeft()">⬅️ 左移</button>
+      <button onclick="moveRight()">➡️ 右移</button>
+      <button onclick="moveUp()">⬆️ 上</button>
+      <button onclick="moveDown()">⬇️ 下</button>
+      <button onclick="scanArea()">🔍 掃描</button>
+      <button onclick="attack()">🔥 攻擊</button>
+      <button onclick="changeWeapon('fire')">1️⃣ 噴火槍</button>
+      <button onclick="changeWeapon('spray')">2️⃣ 香氛噴霧</button>
+      <button onclick="changeWeapon('slipper')">3️⃣ 藍白拖</button>
+    </div>
+
+    <!-- 遊戲場地：第二關為 3×3 -->
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="主臥室戰鬥區：3乘3 九宮格"></div>
+
+    <div id="message" aria-live="assertive"></div>
+
+    <!-- 播音用 audio（語音/音效會共用這顆）-->
+    <audio id="voicePlayer" src="" hidden></audio>
+  </main>
+
+  <!-- 背景音樂 -->
+  <audio id="bgm" src="assets/sounds/game_02.mp3" loop preload="auto"></audio>
+
+  <!-- 背景音樂自動播放解鎖（需互動） -->
+  <script>
+    (function () {
+      document.body.classList.add('ready'); // 淡入
+
+      const bgm = document.getElementById('bgm');
+      function tryPlay() {
+        bgm?.play().catch(()=>{ /* 使用者尚未互動就忽略 */ });
+        document.removeEventListener('click', tryPlay);
+        document.removeEventListener('keydown', tryPlay);
+        document.removeEventListener('touchstart', tryPlay);
+      }
+      document.addEventListener('click', tryPlay, { once: true });
+      document.addEventListener('keydown', tryPlay, { once: true });
+      document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
+    })();
+  </script>
+
+  <!-- 內容資料一定要先載 -->
+  <script src="js/content/bugs.js"></script>
+  <script src="js/content/levels.js"></script>
+
+  <!-- 核心與模式（順序：core -> lane -> grid） -->
+  <script src="js/core/game-core.js"></script>
+  <script src="js/core/mode-lane.js"></script>
+  <script src="js/render/furniture.js"></script>
+  <script src="js/core/mode-grid.js"></script>
+
+  <!-- ★ 加入兩支 a11y 模組（缺這兩行會報 ReferenceError） -->
+  <script src="js/a11y/focus-hints.js"></script>
+  <script src="js/a11y/announce-arbiter.js"></script>
+  <script src="js/a11y/spawn-conductor.js"></script>
+
+  <!-- 這關的啟動檔（會設定 ModeGrid、講開場，講完才 spawnBug） -->
+  <script src="js/boot/game_l2.js"></script>
+  <script>
+  /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁 === */
+  document.addEventListener('game-ready', () => {
+    // 1) 進場提示與自動聚焦（NVDA 焦點模式）
+    const stageEl = document.getElementById('gameArea');
+    window.__focusHints = A11YFocusHints.install({
+      stageEl,
+      // 不給 srEl 也行，模組會自建隱形 aria-live 容器（polite+atomic）
+      hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。',
+      // 預設 useSpeechSynthesis:false，避免和你的遊戲 TTS 打架
+    });
+
+    // 2) 狀態報讀仲裁（合併＋節流，避開 TTS 與生怪半拍）
+    window.__arb = A11YArbiter.install({
+      hpEl:   document.getElementById('playerHP'),
+      coinEl: document.getElementById('playerCoins'),
+      wpnEl:  document.getElementById('weaponStatus'),
+      srEl:   document.getElementById('srStatus'),
+      // 如需微調不同關卡節奏可開放：
+      // coolDownMs: 1200, quietNeedMs: 400, checkInterval: 200,
+    });
+
+      // 安裝 SpawnConductor（把 srStatus 傳進來更精準）
+    window.__sc = SpawnConductor.install({
+      srEl: document.getElementById('srStatus'),
+      // waitTimeout: 2200, quietNeed: 300, poll: 60,
+      // 若有 quiz 語音，建議用與該關相同的 ttsBusyFn：
+      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
+    });
+  });
+
+    // Shift+S：只在遊戲進行時重唸最新狀態
+    document.addEventListener('keydown', (e) => {
+      if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
+        if (window.gameActive) window.__arb?.poke();
+      }
+    });
+
+  // 切頁或重載時，善後還原 role/tabindex 等
+  window.addEventListener('beforeunload', () => {
+    try { window.__focusHints?.destroy(); } catch(_){}
+  });
+  </script>
+  <script>
+  ;(() => {
+    "use strict";
+
+    // === 檔名 → 中文角色名（全部小寫 key） ===
+    const roleMap = {
+      "kinbah.png": "金巴",
+      "mailah.png": "麥拉",
+      "khaupe.png": "考盃",
+      "holah.png": "赫拉",
+      "chinaikhun.png": "金．艾捆",
+      "chiaulaipeh.png": "郊．萊北"
+    };
+
+    // 可靠取檔名（去 query/hash，轉小寫）
+    function fileKey(path){
+      if (!path || typeof path !== "string") return "";
+      const clean = path.split("#")[0].split("?")[0];
+      const file  = clean.split("/").pop() || "";
+      return file.toLowerCase();
+    }
+
+    // 讀玩家 → {name, roleName, avatarPath}
+    function readHero(){
+      let p = {};
+      try { p = JSON.parse(localStorage.getItem("bugSlayerPlayer") || "{}"); } catch {}
+      const name = p?.name || "無名勇者";
+      const avatarPath = p?.avatar || "";
+      const roleName = roleMap[fileKey(avatarPath)] || "未知勇者";
+      return { name, roleName, avatarPath };
+    }
+
+    // 初始化勇者 UI
+    function initHeroUI(){
+      const { name, roleName, avatarPath } = readHero();
+
+      // 勇者名稱（角色中文名．暱稱）
+      const elName = document.getElementById("playerName");
+      if (elName) elName.textContent = `${roleName}．${name}`;
+
+      // 右下角貼圖（裝飾）
+      let sticker = document.getElementById("heroSticker");
+      if (!sticker) {
+        sticker = document.createElement("img");
+        sticker.id = "heroSticker";
+        sticker.className = "hero-sticker";
+        sticker.alt = "";
+        sticker.setAttribute("aria-hidden", "true");
+        document.body.appendChild(sticker);
+      }
+      sticker.style.display = avatarPath ? "" : "none";
+      if (avatarPath) sticker.src = avatarPath;
+    }
+
+    // 攔截 Core.updateUI，每次都維持顯示「角色中文名．暱稱」
+    function patchUpdateUI(){
+      if (!window.Core || typeof Core.updateUI !== "function") return false;
+      if (Core.__patchedHeroName) return true;
+
+      const orig = Core.updateUI.bind(Core);
+      Core.updateUI = function(){
+        orig();
+        const { name, roleName } = readHero();
+        const elName = document.getElementById("playerName");
+        if (elName) elName.textContent = `${roleName}．${name}`;
+      };
+      Core.__patchedHeroName = true;
+      return true;
+    }
+
+    // 確保 patch 成功（事件 + 輪詢）
+    function ensurePatched(){
+      if (patchUpdateUI()) return;
+      const t0 = Date.now();
+      const timer = setInterval(() => {
+        if (patchUpdateUI() || Date.now() - t0 > 5000) clearInterval(timer);
+      }, 120);
+    }
+
+    document.addEventListener("DOMContentLoaded", initHeroUI);
+    document.addEventListener("game-ready", () => {
+      initHeroUI();
+      ensurePatched();
+    }, { once:true });
+    window.addEventListener("load", ensurePatched, { once:true });
+  })();
+  </script>
+  <script>
+  (function(){
+    // 遊戲就緒 → 先關門 → 等 TTS 完成 → 開門 & 生第一隻
+    document.addEventListener('game-ready', async function(){
+      try {
+        // 這時 announceLevelIntro() 已經開始講了；先把門關上，防止講完自動生怪
+        window.__gateOpen = true;
+
+        // 等到 Core 的語音佔用清空（= 開場旁白唸完）
+        while (window.Core && Core._speechDepth > 0) {
+          await new Promise(r => setTimeout(r, 120));
+        }
+
+        // 開門 & 放怪
+        window.__gateOpen = false;
+        if (window.Core && typeof Core.spawnBug === 'function') {
+          Core.spawnBug();
+        }
+      } catch(_) {}
+    }, { once: true });
+  })();
+  </script>
+  <script>
+    Modes.applyModeOnLoad();
+    Modes.bindQuickToggle();
+
+    // 若你有遊戲語音，模式切換時也可補一段說明：
+    document.addEventListener('keydown', (e)=>{
+      if (e.shiftKey && (e.key === 'M' || e.key === 'm')) {
+        // 這裡不用做別的，modes.js 會處理 TTS + aria 了
+      }
+    });
+  </script>
+  <script>
+  /* SRNoiseGate v1 — 全域關/開 live region，避免 NVDA 搶話 */
+  (function (w) {
+    'use strict';
+    // 你要「管控」的 live 元素（可視需求加）
+    const LIVE_SELECTORS = [
+      '#srStatus',  // 我們的狀態播報
+      '#message',   // 大多數關卡用來顯示提示/警示
+      '[role="status"][aria-live]',
+      '[aria-live="polite"]',
+      '[aria-live="assertive"]'
+    ];
+
+    // 取 DOM + 去重
+    function getLiveNodes() {
+      const set = new Set();
+      LIVE_SELECTORS.forEach(sel => {
+        document.querySelectorAll(sel).forEach(n => set.add(n));
+      });
+      return Array.from(set);
+    }
+
+    // 記住原本 aria-live，之後恢復
+    const original = new WeakMap();
+    function muteLiveRegions() {
+      getLiveNodes().forEach(n => {
+        if (!original.has(n)) original.set(n, n.getAttribute('aria-live') || '');
+        n.setAttribute('aria-live', 'off');
+      });
+      // 告訴 AT：頁面暫時忙，別念變更（輔助旗標）
+      document.body.setAttribute('aria-busy', 'true');
+    }
+    function unmuteLiveRegions() {
+      getLiveNodes().forEach(n => {
+        const v = original.get(n);
+        if (v === null || v === '') n.removeAttribute('aria-live');
+        else n.setAttribute('aria-live', v);
+      });
+      document.body.removeAttribute('aria-busy');
+    }
+
+    // 判斷 TTS 是否忙碌（Core 或瀏覽器 TTS 其一）
+    function ttsBusy() {
+      const coreBusy  = !!(w.Core && typeof Core._speechDepth === 'number' && Core._speechDepth > 0);
+      const synthBusy = !!(w.speechSynthesis && speechSynthesis.speaking);
+      return coreBusy || synthBusy;
+    }
+
+    // 監聽器：定期查看狀態轉變，只在「忙碌→空閒」「空閒→忙碌」時切換
+    (function startWatcher() {
+      let muted = false;
+      setInterval(() => {
+        const busy = ttsBusy();
+        if (busy && !muted) { muteLiveRegions(); muted = true; }
+        else if (!busy && muted) { unmuteLiveRegions(); muted = false; }
+      }, 120);
+    })();
+
+    // 若有 Quiz open/close 事件也一併掛上，進一步靜音
+    w.addEventListener?.('quiz-open',  muteLiveRegions);
+    w.addEventListener?.('quiz-close', unmuteLiveRegions);
+
+    // 退出頁面時清理
+    w.addEventListener?.('beforeunload', unmuteLiveRegions);
+  })(window);
+  </script>
+
+</body>
+</html>

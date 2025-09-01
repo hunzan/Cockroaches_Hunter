@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>第五關介紹 - 廚房飯廳</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body { opacity: 0; transition: opacity .6s ease; }
+    body.ready { opacity: 1; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
+    h1,h2 { text-align:center; }
+    .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
+    .bug img {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+    @media (min-width: 768px) { .bug img { max-width: 320px; } }
+    @media (min-width: 1200px) { .bug img { max-width: 400px; } }
+    .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
+    #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
+  </style>
+</head>
+<body class="level-intro">
+  <main class="wrap">
+    <h1>第 5 關：廚房飯廳</h1>
+          <!-- ★ 新增：NVDA / 螢幕報讀使用者提示 -->
+  <section aria-labelledby="a11yTitle">
+    <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
+    <p>
+      使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
+      <span class="kbd">NVDA</span> + <span class="kbd">空白</span>
+      切換到<strong>焦點模式</strong>，再使用方向鍵操作。
+    </p>
+    <ul>
+      <li>方向鍵：<span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> </li>
+      <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
+      <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖、<span class="kbd">4</span> 毒餌</li>
+      <li>攻擊：<span class="kbd">Enter</span></li>
+      <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
+    </ul>
+  </section>
+    <!-- 場地形式 -->
+    <section>
+      <h2>場地形式</h2>
+      <p>10 × 10 格正方形地圖，可上下左右移動。</p>
+    </section>
+
+    <!-- 家具/障礙與移動物件 -->
+    <section>
+      <h2>家具區與移動障礙</h2>
+      <ul>
+        <li>餐桌椅區：<strong>4×2</strong>，位於
+          <strong>第 5–6 行 × 第 4–7 列</strong>（中央偏左）。
+          所有家具皆為障礙，⚠️不可穿越。
+          第一次撞到會語音提醒；同區域第二次硬撞會<strong>扣 1 血、扣 1 金幣</strong>。
+        </li>
+        <li>活動菜籃車：為<strong>移動障礙</strong>，在<strong>第 4 列</strong>沿水平方向來回移動（左右穿梭）。經過時所在格⚠️不能進入，請避開。</li>
+      </ul>
+    </section>
+
+    <!-- 新蟑螂 -->
+    <section>
+      <h2>本關會遇到的新蟑螂 🪳</h2>
+      <article class="bug" aria-label="夭壽強">
+        <img src="assets/images/cockroaches/k5.png" alt="至尊蟑螂王夭壽強，巨大蟑螂王直立如人，張嘴露出獠牙，一副獨裁者的架勢，拿著雞腿指揮蟑螂族們。">
+        <div>
+          <h3>夭壽強（至尊王者）</h3>
+          <p>蟑螂族票選出來的蟑螂王，具蟑螂民意基礎，常規武器無效，叫聲是「夭壽喔」。</p>
+          <p>傳說可用「發動罷免 👎️」或「召喚貓咪 🐈」瓦解其勢力。</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- 操作提示（延續前關邏輯，可留可省） -->
+    <section>
+      <h2>操作方式</h2>
+      <ul>
+        <li>按 <span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> 移動；按 <span class="kbd">空白鍵</span> 掃描蟑螂位置。</li>
+        <li>按 <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span> 選武器（噴火槍、香氛噴霧、藍白拖、毒餌）。</li>
+        <li>本關新增特別武器：<span class="kbd">6</span> 罷免連署、<span class="kbd">7</span> 罷免、<span class="kbd">5</span> 養貓（衡量財力）。</li>
+        <li>對準位置後按 <span class="kbd">Enter</span> 執行。</li>
+      </ul>
+    </section>
+
+    <!-- 特別規則 -->
+    <section class="notice" role="note">
+      <h2>特別規則 💰</h2>
+      <p>可用金幣罷免連署收編 <strong>俗辣強／飛天強尼／主管強強棍</strong>（各需 <strong>1、3、5</strong> 枚）；<strong>軍師蟑到爆</strong>無法收買，需靠智慧解題；罷免連署累積達門檻可<strong>罷免夭壽強</strong>。</p>
+      <p>若金幣超過 200 枚，可購入貓飼料養貓成為武器，需要時可召喚戰貓攻擊蟑螂王。</p>
+    </section>
+
+    <!-- 破關目標 -->
+    <section>
+      <h2>破關目標 🎯</h2>
+      <p>俗辣強 20 隻、飛天強尼 10 隻、主管強強棍 5 隻、軍師蟑到爆 3 隻，完成對蟑螂王夭壽強的終局條件。</p>
+    </section>
+                <!-- ★ 新增：螢幕報讀提示（aria-live），讓 NVDA/JAWS 也會念到 -->
+    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
+
+    <button id="startBtn">進入第五關</button>
+  </main>
+
+  <style>
+    body { background: #000 url("assets/images/game_bg5.png") center/cover no-repeat fixed; }
+  </style>
+  <audio id="bgm" src="assets/sounds/game_05.mp3" loop preload="auto" autoplay muted playsinline></audio>
+
+  <script>
+    const bgm = document.getElementById('bgm');
+    const go  = () => window.location.href = "game_05.html";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+      bgm.play().catch(()=>{});
+
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(
+          "第五關，廚房飯廳。本關敵人：俗辣強、飛天強尼、主管強強棍、軍師蟑到爆與夭壽強。" +
+          "可用金幣罷免連署收編下階蟑螂，累積實力，想辦法對付蟑螂王。" +
+          "目標：俗辣強 20 隻、飛天強尼 10 隻、主管強強棍 5 隻、軍師蟑到爆 3 隻，並完成終局條件。按下按鈕或 Enter 開始。"
+        );
+        u.lang = "zh-TW";
+        u.onstart = () => { bgm.volume = 0.25; };
+        u.onend   = () => { bgm.volume = 1;    };
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      }
+
+      const enableSound = () => {
+        bgm.muted = false; bgm.volume = 1; bgm.play().catch(()=>{});
+        document.removeEventListener('click', enableSound);
+        document.removeEventListener('keydown', enableSound);
+        document.removeEventListener('touchstart', enableSound);
+      };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', go);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Enter') go(); });
+  </script>
+</body>
+</html>

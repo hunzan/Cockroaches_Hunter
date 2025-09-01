@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>第四關介紹 - 客廳</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    body { opacity: 0; transition: opacity .6s ease; }
+    body.ready { opacity: 1; }
+    .wrap { max-width: 900px; margin: 0 auto; }
+    section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
+    h1,h2 { text-align:center; }
+    .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
+    .bug img {
+      width: 100%;
+      max-width: 280px;
+      height: auto;
+      display: block;
+      margin: 0 auto;
+      border-radius: 12px;
+    }
+    @media (min-width: 768px) { .bug img { max-width: 320px; } }
+    @media (min-width: 1200px) { .bug img { max-width: 400px; } }
+    .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
+    #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
+  </style>
+</head>
+<body class="level-intro">
+  <main class="wrap">
+    <h1>第 4 關：客廳</h1>
+          <!-- ★ 新增：NVDA / 螢幕報讀使用者提示 -->
+  <section aria-labelledby="a11yTitle">
+    <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
+    <p>
+      使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
+      <span class="kbd">NVDA</span> + <span class="kbd">空白</span>
+      切換到<strong>焦點模式</strong>，再使用方向鍵操作。
+    </p>
+    <ul>
+      <li>方向鍵：<span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> </li>
+      <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
+      <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖、<span class="kbd">4</span> 毒餌</li>
+      <li>攻擊：<span class="kbd">Enter</span></li>
+      <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
+    </ul>
+  </section>
+    <!-- 場地形式 -->
+    <section>
+      <h2>場地形式</h2>
+      <p>7 × 7 正方形格子地圖，可上下左右移動，但要避開傢具位置。</p>
+    </section>
+
+    <!-- 家具配置與碰撞規則 -->
+    <section>
+      <h2>家具位置說明⚠️不可碰撞💥</h2>
+      <ul>
+        <li>中央沙發茶几區：<strong>3 × 2</strong>，位於<strong>第 3–4 行 × 第 3–5 列</strong>（位於客廳中央）。</li>
+        <li>下方電視區：<strong>3 × 1</strong>，位於<strong>第 7 行 × 第 3–5 列</strong>（位於客廳最下方中間靠牆）。</li>
+      </ul>
+      <p><strong>💥碰撞規則：</strong>家具皆為障礙物，<u>不可穿越</u>。第一次撞到會語音提醒；<u>同一區域第二次硬撞</u>會受傷<strong>扣 1 血、扣 1 金幣</strong>。</p>
+    </section>
+
+    <!-- 新蟑螂品種 -->
+    <section>
+      <h2>本關將會遇到的新蟑螂 🪳</h2>
+      <article class="bug" aria-label="軍師蟑到爆">
+        <img src="assets/images/cockroaches/k4.png" alt="軍師蟑到爆，拿著人類住處室內平面圖，指揮低階蟑螂們如何進攻。">
+        <div>
+          <h3>軍師蟑到爆</h3>
+          <p>戰術謀略型蟑螂，領地感與號召力超強，叫聲是「輸贏。</p>
+          <p>弱點：毒餌、出題想考倒人類卻被更聰明的人解題。</p>
+        </div>
+      </article>
+    </section>
+
+    <!-- 破關目標 -->
+    <section>
+      <h2>破關目標 🎯</h2>
+      <p>俗辣強 10 隻、飛天強尼 10 隻、主管強強棍 5 隻、軍師蟑到爆 2 隻。</p>
+    </section>
+                <!-- ★ 新增：螢幕報讀提示（aria-live），讓 NVDA/JAWS 也會念到 -->
+    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
+
+    <button id="startBtn">進入第四關</button>
+  </main>
+</body>
+
+  <style>
+    body { background: #000 url("assets/images/game_bg4.png") center/cover no-repeat fixed; }
+  </style>
+  <audio id="bgm" src="assets/sounds/game_04.mp3" loop preload="auto" autoplay muted playsinline></audio>
+
+  <script>
+    const bgm = document.getElementById('bgm');
+    const go  = () => window.location.href = "game_04.html";
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+      bgm.play().catch(()=>{});
+
+      if ('speechSynthesis' in window) {
+        const u = new SpeechSynthesisUtterance(
+          "第四關，客廳。本關新增敵人：軍師蟑到爆。" +
+          "注意中央沙發與右側電視區的限制。目標，俗辣強十隻，飛天強尼十隻，主管強強棍五隻，軍師蟑到爆兩隻。按下按鈕或 Enter 開始。"
+        );
+        u.lang = "zh-TW";
+        u.onstart = () => { bgm.volume = 0.25; };
+        u.onend   = () => { bgm.volume = 1;    };
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      }
+
+      const enableSound = () => {
+        bgm.muted = false; bgm.volume = 1; bgm.play().catch(()=>{});
+        document.removeEventListener('click', enableSound);
+        document.removeEventListener('keydown', enableSound);
+        document.removeEventListener('touchstart', enableSound);
+      };
+      document.addEventListener('click', enableSound, { once:true });
+      document.addEventListener('keydown', enableSound, { once:true });
+      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
+    });
+
+    document.getElementById('startBtn').addEventListener('click', go);
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Enter') go(); });
+  </script>
+</body>
+</html>

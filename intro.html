@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>開場動畫 - 進擊的蟑螂</title>
+  <link rel="stylesheet" href="style.css" />
+  <script>window.ASSETS_ROOT = "/";</script>
+  <style>
+    :root{
+      --overlay: rgba(0,0,0,.35);
+    }
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+      /* ★ 用 start_bg.png 當整頁背景 */
+      background: url("assets/images/start_bg.png") no-repeat center center fixed;
+      background-size: cover;
+    }
+    main{
+      max-width: 980px;
+      margin: 4vh auto;
+      padding: 1.25rem;
+      background: var(--overlay);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 16px;
+      backdrop-filter: blur(4px);
+      color: #fff;
+      text-shadow: 0 1px 2px #000;
+      text-align: center; /* ★ 讓內容置中 */
+    }
+    h1{
+      margin: 0 0 .75rem;
+    }
+    #playerInfo{
+      display: flex;
+      justify-content: center; /* ★ 置中玩家資訊 */
+      align-items: center;
+      gap: 1rem;
+      margin: .5rem 0 1.25rem;
+      flex-wrap: wrap;
+    }
+    img.role {
+      border-radius: 12px;
+      max-width: 200px;
+      width: 100%;
+      height: auto;
+      background: rgba(255,255,255,.1);
+      border: 2px solid rgba(255,255,255,.25);
+    }
+    #introText{
+      margin: 1.5rem auto 0;
+      max-width: 600px;      /* 限制寬度，避免行太長 */
+      line-height: 1.8;
+      font-weight: 600;
+      opacity: 0;            /* 初始隱藏 */
+      animation: fadeIn 2s ease forwards; /* ★ 淡入動畫 */
+    }
+    #nextBtn {
+      display: inline-block; /* 配合 text-align:center 置中 */
+      font-size: 1.1rem;
+      padding: 0.6rem 1.4rem;
+      margin: 1.5rem auto 0;
+      border: 0;
+      border-radius: 999px;
+      background: #ffd166;
+      color: #222;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    /* ★ 淡入動畫 */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* 隱形給 SR 用 */
+    .sr-only {
+      position:absolute !important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>進擊的蟑螂 遊戲開場</h1>
+
+    <div id="playerInfo" aria-labelledby="playerHeading">
+      <div>
+        <p id="playerHeading" class="sr-only">玩家資訊</p>
+        <!-- ★ 這裡會顯示：金巴．林北 -->
+        <p id="playerName" aria-live="polite" style="font-size:1.25rem;font-weight:800;"></p>
+      </div>
+      <img id="playerAvatar" class="role" src="" alt="玩家角色圖像">
+    </div>
+
+    <!-- （原本的 start_bg.png 圖片已改為背景，這裡刪掉 cover 圖） -->
+
+    <p id="introText">
+      那一天……人類想起了被蟑螂支配的恐懼。<br>
+      傳說中的救世主 ── 勇者蟑螂獵人於是誕生！
+    </p>
+
+    <audio id="introAudio" src="assets/sounds/game_intro.mp3" autoplay></audio>
+
+    <button id="nextBtn">前往說明頁</button>
+  </main>
+
+  <!-- 與首頁相同音樂 -->
+  <audio id="bgm" src="assets/sounds/start_theme.mp3" loop></audio>
+
+  <script>
+    // 讀玩家資料
+    const player = JSON.parse(localStorage.getItem("bugSlayerPlayer") || "{}");
+    // 保底（避免未選角/未命名時出錯）
+    player.name ??= "無名勇者";
+    player.avatar ??= "assets/images/hunters/kinbah.png";
+    player.hp ??= 10;
+    player.coins ??= 10;
+    player.weaponUsage ??= { fire: 10, spray: 10, slipper: 10 };
+    localStorage.setItem("bugSlayerPlayer", JSON.stringify(player));
+
+    // 檔名 → 角色顯示名 對照
+    const roleNameMap = {
+      "kinbah": "金巴",
+      "mailah": "麥拉",
+      "khaupe": "考盃",
+      "holah": "赫拉",
+      "chinaikhun": "金．艾捆",
+      "chiaulaipeh": "郊．萊北"
+    };
+
+    // 從 avatar 路徑抓檔名（不含副檔名）
+    function pickRoleName(avatarPath){
+      try{
+        const file = avatarPath.split("/").pop();          // e.g. "kinbah.png"
+        const base = (file || "").replace(/\.\w+$/,"");    // "kinbah"
+        return roleNameMap[base] || "勇者";
+      }catch(_){ return "勇者"; }
+    }
+
+    const roleDisplay = pickRoleName(player.avatar);
+    const heroTitle = `${roleDisplay}．${player.name}`;     // ★ 音界號
+
+    // 顯示名稱與圖像
+    document.getElementById("playerName").textContent = `勇者 ${heroTitle} 登場！`;
+    const avatar = document.getElementById("playerAvatar");
+    avatar.src = player.avatar;
+    avatar.alt = `角色 ${roleDisplay} 的圖像`;
+
+    // 下一步
+    document.getElementById("nextBtn").addEventListener("click", () => {
+      window.location.href = "tutorial.html";
+    });
+
+    // 若想播完旁白再自動跳轉，可在這裡設定
+    // document.getElementById("introAudio").addEventListener("ended", () => {
+    //   window.location.href = "tutorial.html";
+    // });
+
+    // BGM 互動解鎖 + 淡入
+    (function () {
+      const bgm = document.getElementById("bgm");
+      if (!bgm) return;
+
+      let armed = false;
+      function fadeInAudio(audio, target = 0.6, durMs = 900) {
+        audio.volume = 0;
+        const steps = 18, delta = target / steps, stepMs = Math.ceil(durMs / steps);
+        let i = 0;
+        const t = setInterval(() => {
+          i++;
+          audio.volume = Math.min(target, audio.volume + delta);
+          if (i >= steps) clearInterval(t);
+        }, stepMs);
+      }
+      function armAndPlay() {
+        if (armed) return;
+        armed = true;
+        bgm.play().then(() => fadeInAudio(bgm, 0.6, 900)).catch(()=>{});
+      }
+      document.addEventListener("keydown", armAndPlay, { once: true });
+      document.addEventListener("click",   armAndPlay, { once: true });
+      document.addEventListener("touchstart", armAndPlay, { once: true, passive: true });
+      window.addEventListener("beforeunload", () => { try { bgm.pause(); } catch(e) {} });
+    })();
+  </script>
+</body>
+</html>

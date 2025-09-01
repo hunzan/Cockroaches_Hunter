@@ -1,0 +1,204 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: sans-serif;
+  color: #fff;             /* 統一白字 */
+  position: relative;
+  background-size: cover;
+  background-position: center;
+}
+/* 暗化遮罩 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* 調整透明度 0.3 ~ 0.7 */
+  z-index: -1;
+}
+h1 {
+  text-align: center;        /* ⭐ 水平置中 */
+  margin: 1rem 0;            /* 上下留白 */
+  font-size: 2rem;           /* 字大一點（可調） */
+  font-weight: 700;
+  text-shadow: 0 2px 6px rgba(0,0,0,0.6); /* ⭐ 白字加光暈，對比更清楚 */
+}
+/* === 各關卡背景 === */
+body.stage1 {
+  background-image: url("assets/images/game_bg1.png");
+}
+body.stage2 {
+  background-image: url("assets/images/game_bg2.png");
+}
+body.stage3 {
+  background-image: url("assets/images/game_bg3.png");
+}
+body.stage4 {
+  background-image: url("assets/images/game_bg4.png");
+}
+body.stage5 {
+  background-image: url("assets/images/game_bg5.png");
+}
+#playerStatus {
+  display: flex;
+  justify-content: center;  /* ⭐ 水平置中整排 */
+  flex-wrap: wrap;          /* 小螢幕自動換行 */
+  gap: 1rem;
+  align-items: center;
+  text-align: center;       /* 裡面文字也置中（可選） */
+}
+
+#playerStatus > div,
+#playerStatus > span {
+  margin: 0;              /* 移除原本可能的外距 */
+}
+
+.tile.obstacle { background:#ded7c5; color:#5b4636; }
+.tile.hazard-cart { background:#ffe8b4; }
+.tile.hazard { /* 肥皂 */ background:#e7f2ff; }
+
+/* === Cat Dialog 美化（L5）=== */
+
+/* === Cat Dialog 美化（快樂配色版）=== */
+#catDialog {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.45);
+  z-index: 10000;
+}
+
+/* 面板本體 */
+#catPanel {
+  width: min(980px, 92vw);
+  max-height: 86vh;
+  overflow: auto;
+  background: #fdf6ec; /* 柔和米色 */
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.35);
+  padding: 20px 24px;
+  color: #333;
+}
+
+/* 標題 / 說明 */
+#catPanel h2 {
+  margin: 0 0 8px;
+  font-size: 1.6rem;
+  color: #d97706; /* 橘色 */
+  border-bottom: 2px solid #fbbf24;
+  padding-bottom: 6px;
+}
+#catPanel p {
+  margin: 0 0 14px;
+  color: #444;
+}
+
+/* 卡片格線 */
+#catGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+/* 卡片樣式 */
+.catCard {
+  background: 	#FFF4C1;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 3px 6px rgba(0,0,0,.08);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.catCard:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,.15); }
+.catCard:focus { outline: 3px solid #3b82f6; outline-offset: 2px; }
+
+.catCard h3 { font-size: 1rem; margin: 8px 0 4px; color: #111; }
+.catCard p  { font-size: .92rem; margin: 0 0 8px; color: #555; }
+.catCard img { width: 100%; height: 140px; object-fit: cover; border-radius: 8px; }
+
+/* 按鈕：領養 */
+.catCard button {
+  width: 100%;
+  border: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #467500;   /* 綠色 */
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background .15s ease;
+}
+.catCard button:hover,
+.catCard button:focus { background: #059669; }
+
+/* 關閉鈕 */
+#catPanel .dialog-close {
+  border: 0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  background: #6b7280;  /* 灰色 */
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+}
+#catPanel .dialog-close:hover,
+#catPanel .dialog-close:focus { background: #4b5563; }
+
+/* 動作列 */
+#catPanel .dialog-a
+
+@media (prefers-color-scheme: dark) {
+  #catPanel { background: #111; color: #eee; }
+  /* 面板內的文案在暗色模式改回淺字 */
+  #catPanel h1, #catPanel h2, #catPanel h3,
+  #catPanel p, #catPanel span, #catPanel label, #catPanel small {
+    color: #eee !important;
+  }
+  .catCard { background: #1a1a1a; border-color: #2a2a2a; }
+  .catCard h3 { color: #fff !important; }
+  .catCard p  { color: #ccc !important; }
+  /* 按鈕維持白字即可（無需改） */
+}
+#catPanel h2 { border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 10px; }
+@media (prefers-color-scheme: dark) {
+  #catPanel h2 { border-bottom-color: #2a2a2a; }
+}
+.furniture-layer img {
+  image-rendering: pixelated; /* 如果你希望保留像素風格 */
+}
+/* 菜籃車所在的格子：背景顏色加深 */
+.tile.hazard-cart {
+  background-color: #467500;  /* 比普通白格更深 */
+  border: 3px solid #CE0000; /* 紅色邊框，凸顯危險 */
+}
+/* 預設顯示模式 */
+:root[data-mode="visual"] body { filter: none; }
+
+/* 純聽覺模式（暗黑 + 關閉互動畫面，但保留 SR 區塊）*/
+:root[data-mode="audio"] body {
+  background: #000 !important;
+}
+
+:root[data-mode="audio"] .game-canvas,
+:root[data-mode="audio"] #gameArea,
+:root[data-mode="audio"] .scene,
+:root[data-mode="audio"] .hud-visual {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  user-select: none !important;
+}
+
+/* 確保無障礙/文字 HUD 可見（例如 srStatus、文字提示） */
+.sr-only { position:absolute; left:-9999px; }
+:root[data-mode="audio"] #srStatus,
+:root[data-mode="audio"] .hud-a11y {
+  position: static;
+  left: auto;
+  opacity: 1 !important;
+  color: #0f0;
+}
+.hint {
+  font-size: 0.85rem;
+  color: #bbb;
+  margin-top: .3rem;
+}
