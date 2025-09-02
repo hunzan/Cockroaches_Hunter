@@ -37,43 +37,38 @@
     <p>按任意鍵開始</p>
   </div>
 
-  <audio id="bgm" src="assets/sounds/start_theme.mp3"></audio>
+  <audio id="bgm" src="assets/sounds/start_theme.mp3" preload="auto" playsinline></audio>
 
         <!-- 在 BGM 之後初始化/登記 -->
   <script>
-    // 1) 初始化（可早就呼叫，多次也沒事）
     AudioFX.init();
-
-    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
-    const bgm = document.getElementById('bgm');
-    AudioFX.register(bgm);
-
-    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
-    window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
+    AudioFX.register(document.getElementById('bgm'));
   </script>
 
   <script>
-    const bgm = document.getElementById("bgm");
+    const bgmEl = document.getElementById('bgm');  // ← 換名字，避免重複宣告
     let started = false;
 
     function startGame() {
       if (started) return;
       started = true;
 
-      // 觸發播放音效
-      bgm.play().catch(err => {
-        console.warn("音樂被瀏覽器阻擋：", err);
-      });
+      // 保險：互動發生時做一次解鎖
+      try { AudioFX.ensure(); } catch (_) {}
 
-      // 1 秒後轉 intro.html（留點時間讓音效響起）
+      // 播放 BGM（若仍被阻擋就算了，不影響導頁）
+      bgmEl.play().catch(() => {});
+
+      // 稍等一下再導頁
       setTimeout(() => {
-        window.location.href = "select_player.html";
-      }, 1000);
+        window.location.href = 'select_player.html';
+      }, 300);
     }
 
-    // 鍵盤或滑鼠點擊都能觸發
-    document.addEventListener("keydown", startGame);
-    document.addEventListener("click", startGame);
+    document.addEventListener('keydown',    startGame, { once:true });
+    document.addEventListener('click',      startGame, { once:true });
+    document.addEventListener('touchstart', startGame, { once:true, passive:true });
   </script>
+
 </body>
 </html>
