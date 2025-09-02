@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="style.css" />
   <script src="js/core/modes.js"></script>
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
     body {
       margin: 0;
@@ -107,26 +108,25 @@
 
     <!-- 播音用 audio -->
     <audio id="voicePlayer" src="" hidden></audio>
+
   </main>
 
   <!-- 背景音樂 -->
   <audio id="bgm" src="assets/sounds/game_04.mp3" loop preload="auto"></audio>
 
-  <!-- BGM 互動解鎖 + 淡入 -->
+            <!-- 在 BGM 之後初始化/登記 -->
   <script>
-    (function () {
-      document.body.classList.add('ready');
-      const bgm = document.getElementById('bgm');
-      function tryPlay() {
-        bgm?.play().catch(()=>{});
-        document.removeEventListener('click', tryPlay);
-        document.removeEventListener('keydown', tryPlay);
-        document.removeEventListener('touchstart', tryPlay);
-      }
-      document.addEventListener('click', tryPlay, { once: true });
-      document.addEventListener('keydown', tryPlay, { once: true });
-      document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
-    })();
+    // 統一交給 AudioFX 控管
+    AudioFX.init();
+
+    // 只寫一次，且在 <audio> 之後
+    const bgmEl = document.getElementById('bgm');
+    AudioFX.register(bgmEl);
+
+    // 可選：遊戲準備好時，再保險叫醒一次
+    window.addEventListener('game-ready', () => {
+      try { AudioFX.ensure(); } catch (_) {}
+    });
   </script>
 
   <!-- 資料 -->
@@ -184,7 +184,12 @@
   <script>
     // boot 完成/或 game-ready 之後呼叫一次
     document.addEventListener('game-ready', () => {
-      Keys.init({ scanFn: () => window.scanArea?.() });
+      const stage = document.getElementById('gameArea'); // ★ 先抓 DOM
+      Keys.init({
+        stageEl: stage,
+        scanFn: () => window.scanArea?.(),
+        activeGuardFn: () => window.gameActive !== false // 可選：遇到測驗/對話時停用
+      });
     }, { once:true });
   </script>
 
@@ -394,6 +399,12 @@
     // 退出頁面時清理
     w.addEventListener?.('beforeunload', unmuteLiveRegions);
   })(window);
+  </script>
+  <script>
+    // 頁面載入就淡入
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+    });
   </script>
 
 </body>

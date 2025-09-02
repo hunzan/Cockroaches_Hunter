@@ -5,6 +5,7 @@
   <title>戰敗… - 進擊的蟑螂</title>
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
   html, body { height: 100%; }
   body {
@@ -49,6 +50,19 @@
   </main>
 
   <audio id="bgm" src="assets/sounds/lose.mp3" preload="auto" autoplay muted playsinline></audio>
+
+      <!-- 在 BGM 之後初始化/登記 -->
+  <script>
+    // 1) 初始化（可早就呼叫，多次也沒事）
+    AudioFX.init();
+
+    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
+    const bgm = document.getElementById('bgm');
+    AudioFX.register(bgm);
+
+    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
+    window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
+  </script>
 
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -100,6 +114,5 @@
       });
     });
   </script>
-
 </body>
 </html>

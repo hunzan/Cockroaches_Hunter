@@ -5,6 +5,7 @@
   <title>第一關介紹 - 儲藏室</title>
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
     body { opacity: 0; transition: opacity .6s ease; }
     body.ready { opacity: 1; }
@@ -106,59 +107,45 @@
          playsinline></audio>
 
   <script>
-    const bgm = document.getElementById('bgm');
-    const srHint = document.getElementById('srHint');
-    const startBtn = document.getElementById('startBtn');
+    // 統一交給 AudioFX
+    AudioFX.init();
+    AudioFX.register(document.getElementById('bgm'));
 
-    // 進關導向前，留下旗標給 game_01.html 做自動聚焦與二次提示
-    const go = () => {
-      try {
-        sessionStorage.setItem('needFocusModeHint', '1'); // ★ 新增
-      } catch (_) {}
-      window.location.href = "game_01.html";
-    };
+    // 若使用者之前已互動過（同分頁流程/上一頁已解鎖），這裡會自動恢復播放
+    AudioFX.ensure();
+  </script>
+
+  <script>
+    // 入關導向（並留旗標給 game_01.html 做自動聚焦/提示）
+    function goLevel1() {
+      try { sessionStorage.setItem('needFocusModeHint', '1'); } catch (_) {}
+      location.href = 'game_01.html';
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // 視覺淡入
       document.body.classList.add('ready');
 
-      // 先讓 bgm 以「靜音」嘗試自動播放
-      bgm.play().catch(()=>{ /* 靜音自動播失敗就等等互動 */ });
-
-      // ★ 新增：給螢幕報讀的 aria-live 提示（不靠瀏覽器 TTS）
-      const hintText = "提示：進入關卡後，使用 NVDA 的玩家請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次 NVDA 加 空白。";
-      srHint.textContent = hintText;
-
-      // 語音說明：開始時把 bgm 音量壓低，結束再調回來
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance("第一關，儲藏室。本關敵人：最低階俗辣強。目標，消滅十隻。按下按鈕或 Enter 開始。");
-        u.lang = "zh-TW";
-        u.onstart = () => { bgm.volume = 0.25; };
-        u.onend   = () => { bgm.volume = 1;    };
-        speechSynthesis.cancel();
-        speechSynthesis.speak(u);
+      // NVDA 提示（用 aria-live，不靠瀏覽器 TTS）
+      const srHint = document.getElementById('srHint');
+      if (srHint) {
+        srHint.textContent =
+          '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次。';
       }
 
-      // 任一互動 → 解除靜音（之後就聽得到）
-      const enableSound = () => {
-        bgm.muted = false;
-        bgm.volume = 1;
-        bgm.play().catch(()=>{});
-        document.removeEventListener('click', enableSound);
-        document.removeEventListener('keydown', enableSound);
-        document.removeEventListener('touchstart', enableSound);
-      };
-      document.addEventListener('click', enableSound, { once:true });
-      document.addEventListener('keydown', enableSound, { once:true });
-      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
+      // 聚焦「進入第一關」按鈕 + 綁事件
+      const startBtn = document.getElementById('startBtn');
+      if (startBtn) {
+        startBtn.addEventListener('click', goLevel1);
+        startBtn.focus({ preventScroll: true });
+      }
 
-      // ★ 新增：讓鍵盤使用者先聚焦到「進入第一關」按鈕，方便直接 Enter
-      startBtn.focus({ preventScroll: true });
-    });
-
-    startBtn.addEventListener('click', go);
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); go(); }
+      // Enter 也可直接開始（避免使用者還要移動焦點）
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); goLevel1(); }
+      });
     });
   </script>
+
 </body>
 </html>

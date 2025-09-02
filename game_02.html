@@ -6,6 +6,7 @@
   <link rel="stylesheet" href="style.css" />
   <script src="js/core/modes.js"></script>
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
     body {
       margin: 0;
@@ -115,22 +116,17 @@
   <!-- 背景音樂 -->
   <audio id="bgm" src="assets/sounds/game_02.mp3" loop preload="auto"></audio>
 
-  <!-- 背景音樂自動播放解鎖（需互動） -->
+      <!-- 在 BGM 之後初始化/登記 -->
   <script>
-    (function () {
-      document.body.classList.add('ready'); // 淡入
+    // 1) 初始化（可早就呼叫，多次也沒事）
+    AudioFX.init();
 
-      const bgm = document.getElementById('bgm');
-      function tryPlay() {
-        bgm?.play().catch(()=>{ /* 使用者尚未互動就忽略 */ });
-        document.removeEventListener('click', tryPlay);
-        document.removeEventListener('keydown', tryPlay);
-        document.removeEventListener('touchstart', tryPlay);
-      }
-      document.addEventListener('click', tryPlay, { once: true });
-      document.addEventListener('keydown', tryPlay, { once: true });
-      document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
-    })();
+    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
+    const bgm = document.getElementById('bgm');
+    AudioFX.register(bgm);
+
+    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
+    window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
   </script>
 
   <!-- 內容資料一定要先載 -->
@@ -159,14 +155,17 @@
   <script>
     // boot 完成/或 game-ready 之後呼叫一次
     document.addEventListener('game-ready', () => {
-      Keys.init({ scanFn: () => window.scanArea?.() });
+      const stage = document.getElementById('gameArea'); // ★ 先抓 DOM
+      Keys.init({
+        stageEl: stage,
+        scanFn: () => window.scanArea?.(),
+        activeGuardFn: () => window.gameActive !== false // 可選：遇到測驗/對話時停用
+      });
     }, { once:true });
   </script>
 
   <script>
     document.addEventListener('game-ready', () => {
-      Keys.init({ scanFn: () => window.scanArea?.() });
-
       const stageEl = document.getElementById('gameArea');
       window.__focusHints = A11YFocusHints.install({ stageEl,
         hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。'
@@ -372,6 +371,12 @@
     // 退出頁面時清理
     w.addEventListener?.('beforeunload', unmuteLiveRegions);
   })(window);
+  </script>
+  <script>
+    // 頁面載入就淡入
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.classList.add('ready');
+    });
   </script>
 
 </body>

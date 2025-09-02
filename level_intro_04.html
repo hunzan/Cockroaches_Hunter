@@ -5,6 +5,7 @@
   <title>第四關介紹 - 客廳</title>
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
     body { opacity: 0; transition: opacity .6s ease; }
     body.ready { opacity: 1; }
@@ -92,37 +93,44 @@
   <audio id="bgm" src="assets/sounds/game_04.mp3" loop preload="auto" autoplay muted playsinline></audio>
 
   <script>
-    const bgm = document.getElementById('bgm');
-    const go  = () => window.location.href = "game_04.html";
+    // 統一交給 AudioFX
+    AudioFX.init();
+    AudioFX.register(document.getElementById('bgm'));
+
+    // 若使用者之前已互動過（同分頁流程/上一頁已解鎖），這裡會自動恢復播放
+    AudioFX.ensure();
+  </script>
+
+  <script>
+    // 入關導向（並留旗標給 game_04.html 做自動聚焦/提示）
+    function goLevel4() {
+      try { sessionStorage.setItem('needFocusModeHint', '4'); } catch (_) {}
+      location.href = 'game_04.html';
+    }
 
     document.addEventListener('DOMContentLoaded', () => {
+      // 視覺淡入
       document.body.classList.add('ready');
-      bgm.play().catch(()=>{});
 
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance(
-          "第四關，客廳。本關新增敵人：軍師蟑到爆。" +
-          "注意中央沙發與右側電視區的限制。目標，俗辣強十隻，飛天強尼十隻，主管強強棍五隻，軍師蟑到爆兩隻。按下按鈕或 Enter 開始。"
-        );
-        u.lang = "zh-TW";
-        u.onstart = () => { bgm.volume = 0.25; };
-        u.onend   = () => { bgm.volume = 1;    };
-        speechSynthesis.cancel(); speechSynthesis.speak(u);
+      // NVDA 提示（用 aria-live，不靠瀏覽器 TTS）
+      const srHint = document.getElementById('srHint');
+      if (srHint) {
+        srHint.textContent =
+          '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次。';
       }
 
-      const enableSound = () => {
-        bgm.muted = false; bgm.volume = 1; bgm.play().catch(()=>{});
-        document.removeEventListener('click', enableSound);
-        document.removeEventListener('keydown', enableSound);
-        document.removeEventListener('touchstart', enableSound);
-      };
-      document.addEventListener('click', enableSound, { once:true });
-      document.addEventListener('keydown', enableSound, { once:true });
-      document.addEventListener('touchstart', enableSound, { once:true, passive:true });
-    });
+      // 聚焦「進入第四關」按鈕 + 綁事件
+      const startBtn = document.getElementById('startBtn');
+      if (startBtn) {
+        startBtn.addEventListener('click', goLevel4);
+        startBtn.focus({ preventScroll: true });
+      }
 
-    document.getElementById('startBtn').addEventListener('click', go);
-    document.addEventListener('keydown', (e)=>{ if(e.key==='Enter') go(); });
+      // Enter 也可直接開始（避免使用者還要移動焦點）
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') { e.preventDefault(); goLevel4(); }
+      });
+    });
   </script>
 </body>
 </html>

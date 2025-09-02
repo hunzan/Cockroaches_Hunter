@@ -5,6 +5,7 @@
   <title>蟑螂圖鑑</title>
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
+  <script src="js/core/audio-unlocker.js"></script>
   <style>
     body { margin: 0; padding: 0; background: #0b0b0b url("assets/images/start_bg.png") center/cover no-repeat fixed; color: #fff; }
     .wrap { max-width: 960px; margin: 0 auto; padding: 1.2rem; }
@@ -33,6 +34,19 @@
     <audio id="voicePlayer" src="" hidden></audio>
   </main>
   <audio id="bgm" src="assets/sounds/cockroach_intro.mp3" loop preload="auto"></audio>
+
+      <!-- 在 BGM 之後初始化/登記 -->
+  <script>
+    // 1) 初始化（可早就呼叫，多次也沒事）
+    AudioFX.init();
+
+    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
+    const bgm = document.getElementById('bgm');
+    AudioFX.register(bgm);
+
+    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
+    window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
+  </script>
 
   <!-- 先載入資料 -->
   <script src="js/content/bugs.js"></script>
