@@ -53,57 +53,53 @@
   <script>
     document.addEventListener('DOMContentLoaded', () => {
       document.body.classList.add('ready');
-    });
 
-    function getParam(name){
-      return new URL(location.href).searchParams.get(name);
-    }
-
-    function buildRetryUrl(level){
-      // ★依你實際命名規則調整
-      return `game_l${level}.html`;
-    }
-
-    function clearProgress() {
-      try {
-        Object.keys(localStorage).forEach(k => {
-          if (k.startsWith("packApplied_L")) localStorage.removeItem(k);
-        });
-        localStorage.removeItem("bugSlayerPlayer");
-      } catch (e) { console.warn("清進度失敗：", e); }
-    }
-
-    const bgm = document.getElementById('bgm');
-    function enableSoundOnce() {
-      bgm.muted = false; bgm.volume = 1;
-      bgm.play().catch(()=>{});
-      document.removeEventListener('click', enableSoundOnce);
-      document.removeEventListener('keydown', enableSoundOnce);
-      document.removeEventListener('touchstart', enableSoundOnce);
-    }
-    document.addEventListener('DOMContentLoaded', () => {
+      // BGM 解鎖
+      const bgm = document.getElementById('bgm');
+      const enableSoundOnce = () => {
+        bgm.muted = false; bgm.volume = 1;
+        bgm.play().catch(()=>{});
+        document.removeEventListener('click', enableSoundOnce);
+        document.removeEventListener('keydown', enableSoundOnce);
+        document.removeEventListener('touchstart', enableSoundOnce);
+      };
       bgm.play().catch(()=>{});
       document.addEventListener('click', enableSoundOnce, { once:true });
       document.addEventListener('keydown', enableSoundOnce, { once:true });
       document.addEventListener('touchstart', enableSoundOnce, { once:true, passive:true });
 
+      // 語音
       if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance("蟑螂們佔領了你的家。但勇者不會放棄。");
-        u.lang = "zh-TW";
+        const u = new SpeechSynthesisUtterance('蟑螂們佔領了你的家。但勇者不會放棄。');
+        u.lang = 'zh-TW';
         u.onstart = () => { bgm.volume = 0.25; };
         u.onend   = () => { bgm.volume = 1;    };
         speechSynthesis.cancel(); speechSynthesis.speak(u);
       }
 
-      const level = Number(getParam('level') || 1);
-      document.getElementById('retryBtn').addEventListener('click', () => {
-        location.href = buildRetryUrl(level);
+      // ★ 重試本關：只綁一次，讀 sessionStorage 的 lastLevel
+      const retryBtn = document.getElementById('retryBtn');
+      retryBtn?.addEventListener('click', () => {
+        let target = 'level_intro_01.html'; // 後備
+        try {
+          const last = sessionStorage.getItem('lastLevel');
+          if (last && /\.html$/i.test(last)) target = last;
+        } catch(_) {}
+        location.href = './' + target; // 相對路徑更穩
       });
-      document.getElementById('resetBtn').addEventListener('click', () => {
-        clearProgress();
-        location.href = "index.html"; // ★回到主頁
+
+      // 從頭開始：清進度回首頁
+      document.getElementById('resetBtn')?.addEventListener('click', () => {
+        try {
+          Object.keys(localStorage).forEach(k => {
+            if (k.startsWith('packApplied_L')) localStorage.removeItem(k);
+          });
+          localStorage.removeItem('bugSlayerPlayer');
+        } catch(e){}
+        location.href = 'index.html';
       });
     });
   </script>
+
 </body>
 </html>

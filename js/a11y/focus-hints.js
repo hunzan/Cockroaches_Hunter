@@ -100,3 +100,37 @@
   // 輸出單一命名空間
   global.A11YFocusHints = { install };
 })(window);
+
+// 共用鍵綁定：讓「掃描」在 NVDA 焦點模式也可靠
+(function bindScanKeys(){
+  const isEditable = (el) => {
+    if (!el) return false;
+    const tag = el.tagName?.toLowerCase();
+    const type = (el.type || '').toLowerCase();
+    return el.isContentEditable || tag === 'input' || tag === 'textarea' || type === 'search';
+  };
+
+  // 1) 先在捕獲階段攔 keydown，避免被當 click
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' || e.key === ' ') {
+      if (!isEditable(e.target)) {
+        e.preventDefault(); // 阻止預設點擊行為
+      }
+    }
+  }, true); // ← capture
+
+  // 2) 用 keyup 來觸發掃描（NVDA 多半會放行 keyup）
+  document.addEventListener('keyup', (e) => {
+    const isSpace = (e.code === 'Space' || e.key === ' ');
+    const isShiftSpace = (e.shiftKey && isSpace);
+    if ((isSpace || isShiftSpace) && !isEditable(e.target)) {
+      e.preventDefault();
+      if (typeof window.scanArea === 'function') window.scanArea();
+    }
+  });
+
+  // 3) 額外提供 Shift+S 重唸狀態（你已經有 Arbiter）
+  document.addEventListener('keyup', (e) => {
+    if (e.shiftKey && (e.key === 'S' || e.key === 's')) window.__arb?.poke();
+  });
+})();

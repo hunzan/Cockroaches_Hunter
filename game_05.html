@@ -104,7 +104,7 @@
     </div>
 
     <!-- 遊戲場地（10×10） -->
-    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="廚房飯廳戰鬥區：10乘10 格狀區域"></div>
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="廚房飯廳戰鬥區：10乘10 格狀區域" tabindex="0"></div>
 
     <div id="message" aria-live="assertive"></div>
 
@@ -189,27 +189,20 @@
     const keys = ["Enter","Escape","ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "];
     if (!keys.includes(e.key)) return;
 
-    // 攔住事件：避免觸發 Core 的移動/攻擊
     e.preventDefault();
     e.stopPropagation();
 
-    // Esc → 關窗
-    if (e.key === "Escape") {
-      if (typeof closeCatPicker === "function") closeCatPicker();
-      return;
-    }
+    // Esc 關窗
+    if (e.key === "Escape") { closeCatPicker?.(); return; }
 
-    // Enter → 若在關閉鈕，關窗；若在卡片，觸發領養；否則交由焦點元素自己處理（但不外傳）
-    if (e.key === "Enter") {
-      const el = document.activeElement;
-      if (el?.classList?.contains('dialog-close')) {
-        if (typeof closeCatPicker === "function") closeCatPicker();
-        return;
-      }
-      if (el?.classList?.contains('catCard')) {
-        el.querySelector('button')?.click();
-        return;
-      }
+    // Space/Enter → 讓按鈕能被啟動
+    const el = document.activeElement;
+    const isButtonLike = (el?.tagName === 'BUTTON') || (el?.getAttribute?.('role') === 'button');
+    if (e.key === ' ' && isButtonLike) { el.click?.(); return; }
+    if (e.key === 'Enter') {
+      if (el?.classList?.contains('dialog-close')) { closeCatPicker?.(); return; }
+      if (el?.classList?.contains('catCard')) { el.querySelector('button')?.click(); return; }
+      if (isButtonLike) { el.click?.(); return; }
     }
 
     // 方向鍵在卡片間移動
@@ -261,6 +254,7 @@
   // 額外保險：當武器選到「養貓」且尚未領養時，按 Enter 也會打開視窗
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Enter') return;
+    if (isVisible(dialog)) return;                 // ★ 新增：視窗開著就不再開
     const G = window.game; if (!G) return;
     if (G.state?.weapon === 'cat' && !G.state?.catOwned) {
       if (typeof openCatPicker === 'function') {
@@ -288,6 +282,7 @@
 
   <!-- 問答與 K4 對話（順序很重要：quiz.js → 建立實例 → k4_dialog.js → wiring → boot） -->
   <script src="js/core/quiz.js"></script>
+
   <script>
     // 建立全域題庫實例（路徑用你實際的 K4 題庫）
     window.quiz = new window.QuizEngine({
@@ -307,6 +302,19 @@
   </script>
 
   <script src="js/core/k4_dialog.js"></script>
+
+  <script src="js/core/retry.js"></script>
+  <script> Retry.rememberLevel(); </script>
+
+  <script src="js/core/keys.js"></script>
+
+  <script>
+    // boot 完成/或 game-ready 之後呼叫一次
+    document.addEventListener('game-ready', () => {
+      Keys.init({ scanFn: () => window.scanArea?.() });
+    }, { once:true });
+  </script>
+
   <script>
   /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁（含 Quiz 兼容） === */
   document.addEventListener('game-ready', () => {
@@ -340,16 +348,9 @@
       srEl: document.getElementById('srStatus'),
       // waitTimeout: 2200, quietNeed: 300, poll: 60,
       // 若有 quiz 語音，建議用與該關相同的 ttsBusyFn：
-      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
+      ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
     });
   });
-
-    // Shift+S：只在遊戲進行時重唸最新狀態
-    document.addEventListener('keydown', (e)=>{
-      if (e.shiftKey && (e.key==='S'||e.key==='s')) {
-        if (window.gameActive) window.__arb?.poke();
-      }
-    });
 
     // （可選）若 k4_dialog 有派發事件，可同步遊戲活動狀態
     window.addEventListener('quiz-open',  () => { window.gameActive = false; });
@@ -450,14 +451,7 @@
     window.addEventListener("load", ensurePatched, { once:true });
   })();
   </script>
-  <!-- ★ 將 k4_dialog 綁進遊戲（保持精簡、交由 k4_dialog 接管流程） -->
-  <script>
-    document.addEventListener('game-ready', (e) => {
-      const game = e.detail?.game || window.game;
-      if (typeof window.bindK4Trigger === 'function')    window.bindK4Trigger(game);
-      if (typeof window.bindQuizHandlers === 'function') window.bindQuizHandlers(game);
-    });
-  </script>
+
   <!-- 啟動腳本（第 5 關） -->
   <script src="js/boot/game_l5.js"></script>
   <script>

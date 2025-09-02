@@ -104,7 +104,7 @@
     </div>
 
     <!-- 遊戲場地：第二關為 3×3 -->
-    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="主臥室戰鬥區：3乘3 九宮格"></div>
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="主臥室戰鬥區：3乘3 九宮格" tabindex="0"></div>
 
     <div id="message" aria-live="assertive"></div>
 
@@ -150,48 +150,42 @@
 
   <!-- 這關的啟動檔（會設定 ModeGrid、講開場，講完才 spawnBug） -->
   <script src="js/boot/game_l2.js"></script>
+
+  <script src="js/core/retry.js"></script>
+  <script> Retry.rememberLevel(); </script>
+
+    <script src="js/core/keys.js"></script>
+
   <script>
-  /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁 === */
-  document.addEventListener('game-ready', () => {
-    // 1) 進場提示與自動聚焦（NVDA 焦點模式）
-    const stageEl = document.getElementById('gameArea');
-    window.__focusHints = A11YFocusHints.install({
-      stageEl,
-      // 不給 srEl 也行，模組會自建隱形 aria-live 容器（polite+atomic）
-      hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。',
-      // 預設 useSpeechSynthesis:false，避免和你的遊戲 TTS 打架
+    // boot 完成/或 game-ready 之後呼叫一次
+    document.addEventListener('game-ready', () => {
+      Keys.init({ scanFn: () => window.scanArea?.() });
+    }, { once:true });
+  </script>
+
+  <script>
+    document.addEventListener('game-ready', () => {
+      Keys.init({ scanFn: () => window.scanArea?.() });
+
+      const stageEl = document.getElementById('gameArea');
+      window.__focusHints = A11YFocusHints.install({ stageEl,
+        hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。'
+      });
+      window.__arb = A11YArbiter.install({
+        hpEl:   document.getElementById('playerHP'),
+        coinEl: document.getElementById('playerCoins'),
+        wpnEl:  document.getElementById('weaponStatus'),
+        srEl:   document.getElementById('srStatus'),
+      });
+      window.__sc = SpawnConductor.install({
+        srEl: document.getElementById('srStatus'),
+        // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
+      });
     });
 
-    // 2) 狀態報讀仲裁（合併＋節流，避開 TTS 與生怪半拍）
-    window.__arb = A11YArbiter.install({
-      hpEl:   document.getElementById('playerHP'),
-      coinEl: document.getElementById('playerCoins'),
-      wpnEl:  document.getElementById('weaponStatus'),
-      srEl:   document.getElementById('srStatus'),
-      // 如需微調不同關卡節奏可開放：
-      // coolDownMs: 1200, quietNeedMs: 400, checkInterval: 200,
+    window.addEventListener('beforeunload', () => {
+      try { window.__focusHints?.destroy(); } catch(_){}
     });
-
-      // 安裝 SpawnConductor（把 srStatus 傳進來更精準）
-    window.__sc = SpawnConductor.install({
-      srEl: document.getElementById('srStatus'),
-      // waitTimeout: 2200, quietNeed: 300, poll: 60,
-      // 若有 quiz 語音，建議用與該關相同的 ttsBusyFn：
-      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
-    });
-  });
-
-    // Shift+S：只在遊戲進行時重唸最新狀態
-    document.addEventListener('keydown', (e) => {
-      if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
-        if (window.gameActive) window.__arb?.poke();
-      }
-    });
-
-  // 切頁或重載時，善後還原 role/tabindex 等
-  window.addEventListener('beforeunload', () => {
-    try { window.__focusHints?.destroy(); } catch(_){}
-  });
   </script>
   <script>
   ;(() => {

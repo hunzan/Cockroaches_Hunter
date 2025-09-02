@@ -100,7 +100,7 @@
     </div>
 
     <!-- 遊戲場地：第三關是 6×3（左右雙拼 3×3） -->
-    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="廁所浴室戰鬥區：6乘3 格狀區域"></div>
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="廁所浴室戰鬥區：6乘3 格狀區域" tabindex="0"></div>
 
     <div id="message" aria-live="assertive"></div>
 
@@ -144,6 +144,19 @@
 
   <!-- 啟動腳本（會設為 ModeGrid、講開場，講完才 spawnBug） -->
   <script src="js/boot/game_l3.js"></script>
+
+  <script src="js/core/keys.js"></script>
+  <script src="js/core/retry.js"></script>
+  <script> Retry.rememberLevel(); </script>
+
+
+  <script>
+    // boot 完成/或 game-ready 之後呼叫一次
+    document.addEventListener('game-ready', () => {
+      Keys.init({ scanFn: () => window.scanArea?.() });
+    }, { once:true });
+  </script>
+
   <script>
   /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁 === */
   document.addEventListener('game-ready', () => {
@@ -173,13 +186,6 @@
       // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
     });
   });
-
-    // Shift+S：只在遊戲進行時重唸最新狀態
-    document.addEventListener('keydown', (e) => {
-      if (e.shiftKey && (e.key === 'S' || e.key === 's')) {
-        if (window.gameActive) window.__arb?.poke();
-      }
-    });
 
   // 切頁或重載時，善後還原 role/tabindex 等
   window.addEventListener('beforeunload', () => {

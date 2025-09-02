@@ -101,7 +101,7 @@
     </div>
 
     <!-- 遊戲場地：本關為 7×7 -->
-    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="客廳戰鬥區：7乘7 格狀區域"></div>
+    <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="客廳戰鬥區：7乘7 格狀區域" tabindex="0"></div>
 
     <div id="message" aria-live="assertive"></div>
 
@@ -164,6 +164,8 @@
   </script>
 
   <script src="js/core/k4_dialog.js"></script>
+  <script src="js/core/retry.js"></script>
+  <script> Retry.rememberLevel(); </script>
 
   <!-- ★ 將 k4_dialog 綁進遊戲（保持精簡、交由 k4_dialog 接管流程） -->
   <script>
@@ -176,6 +178,16 @@
 
   <!-- 啟動腳本（第 4 關） -->
   <script src="js/boot/game_l4.js"></script>
+
+  <script src="js/core/keys.js"></script>
+
+  <script>
+    // boot 完成/或 game-ready 之後呼叫一次
+    document.addEventListener('game-ready', () => {
+      Keys.init({ scanFn: () => window.scanArea?.() });
+    }, { once:true });
+  </script>
+
   <script>
   /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁 === */
   document.addEventListener('game-ready', () => {
@@ -202,16 +214,9 @@
       srEl: document.getElementById('srStatus'),
       // waitTimeout: 2200, quietNeed: 300, poll: 60,
       // 若有 quiz 語音，建議用與該關相同的 ttsBusyFn：
-      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
+      ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
     });
   });
-
-    // Shift+S：只在遊戲進行時重唸最新狀態
-    document.addEventListener('keydown', (e)=>{
-      if (e.shiftKey && (e.key==='S'||e.key==='s')) {
-        if (window.gameActive) window.__arb?.poke();
-      }
-    });
 
     // （可選）當測驗對話框開啟/關閉時，暫停/恢復遊戲的狀態播報
     // 若 k4_dialog 內有派發這兩個事件，這裡就能掛上：
