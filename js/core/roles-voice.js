@@ -4,12 +4,14 @@
 
   // 預設中文名 → MP3 對照；你也可以在外部 window.ROLE_VOICES 覆蓋
   const DEFAULT_ROLE_VOICES = {
-    "金巴":        VOICE_ROOT + "kinbah.mp3",
-    "麥拉":        VOICE_ROOT + "mailah.mp3",
-    "考盃":        VOICE_ROOT + "khaupe.mp3",
-    "赫拉":        VOICE_ROOT + "holah.mp3",
-    "金．艾捆":    VOICE_ROOT + "chinaikhun.mp3",
-    "郊．萊北":    VOICE_ROOT + "chiaulaipeh.mp3",
+    "金巴":        VOICE_ROOT + "kinbah_select.mp3",
+    "麥拉":        VOICE_ROOT + "mailah_select.mp3",
+    "考盃":        VOICE_ROOT + "khaupe_select.mp3",
+    "赫拉":        VOICE_ROOT + "holah_select.mp3",
+    "金．艾捆":    VOICE_ROOT + "chinaikhun_select.mp3",
+    "郊．萊北":    VOICE_ROOT + "chiaulaipeh_select.mp3",
+    "綿葩．坂":    VOICE_ROOT + "mienphapan_select.mp3",
+    "罕族．拗":    VOICE_ROOT + "hamchuniok_select.mp3",
   };
 
   // 若你用檔名辨識（ex: <img src=".../kinbah.png">）
@@ -20,6 +22,8 @@
     "holah": "赫拉",
     "chinaikhun": "金．艾捆",
     "chiaulaipeh": "郊．萊北",
+    "mienphapan": "綿葩．坂",
+    "hamchuniok": "罕族．拗",
   };
 
   let ROLE_VOICES = { ...(w.ROLE_VOICES || DEFAULT_ROLE_VOICES) };
