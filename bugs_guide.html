@@ -18,38 +18,66 @@
     .btnbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
     .btn { background: #ffd452; color: #222; border: none; border-radius: 8px; padding: .5rem .9rem; cursor: pointer; }
     .btn:hover { filter: brightness(1.05); }
+
+    /* --- 無障礙：skip link（隱藏，聚焦時顯示） --- */
+    .skip-link {
+      position: absolute; left: -9999px; top: 0;
+      background: #ffd452; color: #111; padding: .5rem .75rem; border-radius: 8px;
+      text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .skip-link:focus, .skip-link:focus-visible {
+      left: 12px; top: 12px; z-index: 1000;
+      outline: 2px solid #222;
+    }
+    /* 聚焦樣式，讓鍵盤使用者看得到 */
+    .card:focus, .card:focus-visible {
+      outline: 3px solid #ffd452; outline-offset: 2px;
+    }
+    /* 只給讀屏用的隱藏 class */
+    .sr-only {
+      position: absolute !important;
+      width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 1px, 1px); white-space: nowrap; border: 0;
+    }
   </style>
 </head>
-<body>
-  <main class="wrap">
+<body class="guide">
+  <!-- 隱藏的跳轉連結：聚焦時才顯示 -->
+  <a href="#main" class="skip-link" id="skipToMain">跳到主內容</a>
+
+  <main class="wrap" id="main" tabindex="-1" aria-label="蟑螂圖鑑主內容">
     <h1>蟑螂圖鑑</h1>
     <p>出場角色與擊殺獎勵說明：</p>
+
+    <!-- 讀屏用 live 區（宣告跳轉與卡片提示） -->
+    <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
     <section class="grid" id="bugGrid" aria-label="蟑螂圖鑑卡片列表"></section>
 
     <div class="btnbar">
-      <button class="btn" onclick="location.href='level_intro_01.html'">前往第 1 關</button>
+      <button class="btn" id="nextBtn" onclick="location.href='level_intro_01.html'">前往第 1 關</button>
     </div>
-    <!-- 播音用 audio -->
+
+    <!-- 播音用 audio（若有語音檔需求） -->
     <audio id="voicePlayer" src="" hidden></audio>
   </main>
+
   <audio id="bgm" src="assets/sounds/cockroach_intro.mp3" loop preload="auto"></audio>
 
-      <!-- 在 BGM 之後初始化/登記 -->
+  <!-- 在 BGM 之後初始化/登記 -->
   <script>
     // 1) 初始化（可早就呼叫，多次也沒事）
     AudioFX.init();
-
     // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
     const bgm = document.getElementById('bgm');
     AudioFX.register(bgm);
-
     // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
     window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
   </script>
 
   <!-- 先載入資料 -->
   <script src="js/content/bugs.js"></script>
+
   <script>
     (function () {
       const bgm = document.getElementById('bgm');
@@ -64,7 +92,8 @@
       document.addEventListener('touchstart', tryPlay, { once: true, passive: true });
     })();
   </script>
-<script>
+
+  <script>
   // 統一的鍵→中文對照
   const LABELS = {
     fire: "噴火槍",
@@ -77,7 +106,6 @@
     cat: "貓"
   };
 
-  // 把 reward 轉中文
   function dropText(b) {
     const r = b.reward || {};
     const parts = [];
@@ -88,7 +116,6 @@
     return parts.length ? parts.join("、") : "—";
   }
 
-  // 被咬後果
   function damageText(b) {
     const d = b.damage || {};
     const parts = [];
@@ -97,22 +124,14 @@
     return parts.length ? parts.join("、") : "—";
   }
 
-  // ===== 新增：產生圖片替代文字 =====
+  // ===== 產生圖片替代文字 =====
   function buildImageAlt(b) {
-    // 1) 若 bugs.js 提供 imageAlt，直接用（最推薦）
     if (b.imageAlt && typeof b.imageAlt === 'string') return b.imageAlt.trim();
-
-    // 2) 沒給就用 fallback：描述外觀/動作，避免重複名稱
-    //   優先用 title/description 裡的可視內容；過長則截斷。
     const bits = [];
-    // 從描述抓「可視覺的」片段（這裡先保守直接取 description）
     if (b.description) bits.push(b.description.replace(/\s+/g, ' ').trim());
-    // 若有稱號 title，通常也是外觀/氣質
     if (b.title) bits.push(b.title.replace(/\s+/g, ' ').trim());
     let alt = bits.filter(Boolean).join("，");
-    // 太短時至少補一句「正在…」的動態（可依你的素材調整）
     if (!alt) alt = "正在出沒中的蟑螂，姿勢詭祕。";
-    // 控制長度讓讀屏更順
     if (alt.length > 120) alt = alt.slice(0, 118) + "…";
     return alt;
   }
@@ -122,26 +141,80 @@
     const grid = document.getElementById("bugGrid");
     if (!grid) return;
 
-    grid.innerHTML = list.map(b => {
+    grid.innerHTML = list.map((b, idx) => {
       const weaknesses = (b.weaknesses || [])
         .map(w => LABELS[w] || w)
         .map(name => `<span class="tag">${name}</span>`).join("");
 
       const imgAlt = buildImageAlt(b);
+      const hid = `bug-h-${idx}`;
+      const did = `bug-d-${idx}`;
+      const aid = `bug-a-${idx}`;
 
       return `
-        <article class="card" role="article" aria-label="${b.name}">
+        <article
+          class="card"
+          role="article"
+          tabindex="0"
+          aria-labelledby="${hid}"
+          aria-describedby="${did} ${aid}"
+          data-index="${idx}"
+        >
           <img src="${b.image}" alt="${imgAlt}" loading="lazy" decoding="async">
-          <h2 style="margin:.5rem 0 .25rem">${b.name}</h2>
-          <div class="meta">${b.title ? `${b.title}<br>` : ""}${b.description || ""}</div>
+          <h2 id="${hid}" style="margin:.5rem 0 .25rem">${b.name}</h2>
+          <div id="${did}" class="meta">${b.title ? `${b.title}<br>` : ""}${b.description || ""}</div>
           <div class="meta" style="margin-top:.4rem">弱點：${weaknesses || "—"}</div>
           <div class="meta" style="margin-top:.4rem">被咬的後果：${damageText(b)}</div>
-          <div class="meta" style="margin-top:.4rem">擊殺獎勵：${dropText(b)}</div>
+          <div id="${aid}" class="meta" style="margin-top:.4rem">擊殺獎勵：${dropText(b)}</div>
         </article>
       `;
     }).join("");
-  })();
-</script>
 
+    // === 跳到主內容：把焦點帶到第一張卡片，並宣告給讀屏 ===
+    const skip = document.getElementById('skipToMain');
+    const live = document.getElementById('live');
+    const firstCard = grid.querySelector('.card');
+    const nextBtn = document.getElementById('nextBtn');
+
+    function announce(msg){
+      if (!live) return;
+      // 重設內容以觸發 aria-live
+      live.textContent = '';
+      // 用 setTimeout 確保 NVDA 抓到更新
+      setTimeout(()=>{ live.textContent = msg; }, 0);
+    }
+
+    function focusFirstCard() {
+      if (!firstCard) return;
+      // 讓讀屏知道我們真的來到主內容與第一張卡
+      announce('已跳到主內容。即將介紹第一張卡片。');
+      firstCard.focus();
+    }
+
+    // 點擊或按 Enter 皆可
+    skip.addEventListener('click', (e)=> {
+      e.preventDefault();
+      focusFirstCard();
+    });
+    skip.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        focusFirstCard();
+      }
+    });
+
+    // 每當卡片取得焦點時，播報簡短提示（避免太冗長）
+    grid.addEventListener('focusin', (e)=>{
+      const card = e.target.closest('.card');
+      if (!card) return;
+      const idx = Number(card.getAttribute('data-index') || 0);
+      const h = card.querySelector('h2')?.textContent?.trim() || `卡片 ${idx+1}`;
+      announce(`第 ${idx+1} 張卡片：${h}。按 Tab 可繼續聽下一張。`);
+    });
+
+    // 鍵盤友善：在最後一張卡片按 Tab，自然會到下一步按鈕
+    //（DOM 順序已確保按鈕在卡片後方，所以無需額外代碼）
+  })();
+  </script>
 </body>
 </html>

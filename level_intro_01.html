@@ -13,33 +13,43 @@
     section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
     h1,h2 { text-align:center; }
     .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
-    .bug img {
-      width: 100%;
-      max-width: 280px;
-      height: auto;
-      display: block;
-      margin: 0 auto;
-      border-radius: 12px;
-    }
+    .bug img { width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto; border-radius: 12px; }
     @media (min-width: 768px) { .bug img { max-width: 320px; } }
     @media (min-width: 1200px) { .bug img { max-width: 400px; } }
     .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
     #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
-        /* ★ 新增：僅給螢幕報讀的提示樣式（視覺隱藏） */
+
+    /* 視覺隱藏（僅讀屏） */
     .sr-only {
-      position: absolute !important;
-      width: 1px; height: 1px;
-      padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,1px,1px);
-      white-space: nowrap; border: 0;
+      position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0;
     }
+
+    /* Skip link：預設隱藏，聚焦才顯示 */
+    .skip-link {
+      position: absolute; left: -9999px; top: 0;
+      background: #ffd452; color: #111; padding: .5rem .75rem; border-radius: 8px;
+      text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    }
+    .skip-link:focus, .skip-link:focus-visible { left: 12px; top: 12px; z-index: 1000; outline: 2px solid #222; }
+
+    /* 焦點可見（給鍵盤使用者） */
+    [tabindex="-1"]:focus, section:focus, #startBtn:focus { outline: 3px solid #ffd452; outline-offset: 2px; }
   </style>
 </head>
 <body class="level-intro">
-  <main class="wrap">
+<!-- 隱藏的跳轉連結們（聚焦時顯示） -->
+<a href="#main" class="skip-link" id="skipToMain"
+   aria-label="跳到主內容，直接開始聽本關說明">跳到主內容</a>
+
+<a href="#startBtn" class="skip-link" style="top:56px" id="skipToStart"
+   aria-label="跳到開始按鈕，直接進入遊戲">跳到開始按鈕</a>
+
+  <main class="wrap" id="main" tabindex="-1" aria-label="第一關介紹主內容">
     <h1>第 1 關：儲藏室</h1>
-        <!-- ★ 新增：NVDA / 螢幕報讀使用者提示 -->
-    <section aria-labelledby="a11yTitle">
+
+    <!-- 第一區塊：可程序聚焦 -->
+    <section id="a11yBlock" aria-labelledby="a11yTitle" tabindex="-1">
       <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
       <p>
         使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
@@ -54,6 +64,7 @@
         <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
       </ul>
     </section>
+
     <!-- 場地形式 -->
     <section>
       <h2>場地形式</h2>
@@ -82,13 +93,18 @@
         <li>對準位置後，按 <span class="kbd">Enter</span> 攻擊。</li>
       </ul>
     </section>
-        <!-- 破關目標 -->
-    <section>
-      <h2>破關目標 🎯</h2>
+
+    <!-- 破關目標 -->
+    <section id="goalSection" tabindex="-1" aria-labelledby="goalTitle">
+      <h2 id="goalTitle">破關目標 🎯</h2>
       <p>俗辣強 10 隻。</p>
     </section>
-        <!-- ★ 新增：螢幕報讀提示（aria-live），讓 NVDA/JAWS 也會念到 -->
+
+    <!-- 讀屏提示（live） -->
     <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
+
+    <!-- 結尾哨兵：Tab 到此會自動送焦點到開始按鈕 -->
+    <div id="endSentinel" class="sr-only" tabindex="0" aria-label="已到說明結尾，將前往開始按鈕"></div>
 
     <button id="startBtn">進入第一關</button>
   </main>
@@ -98,54 +114,62 @@
     body { background: #000 url("assets/images/game_bg1.png") center/cover no-repeat fixed; color:#fff; }
   </style>
 
-  <audio id="bgm"
-         src="assets/sounds/game_01.mp3"
-         loop
-         preload="auto"
-         autoplay
-         muted
-         playsinline></audio>
+  <audio id="bgm" src="assets/sounds/game_01.mp3" loop preload="auto" autoplay muted playsinline></audio>
 
   <script>
-    // 統一交給 AudioFX
     AudioFX.init();
     AudioFX.register(document.getElementById('bgm'));
-
-    // 若使用者之前已互動過（同分頁流程/上一頁已解鎖），這裡會自動恢復播放
     AudioFX.ensure();
   </script>
 
   <script>
-    // 入關導向（並留旗標給 game_01.html 做自動聚焦/提示）
     function goLevel1() {
       try { sessionStorage.setItem('needFocusModeHint', '1'); } catch (_) {}
       location.href = 'game_01.html';
     }
 
     document.addEventListener('DOMContentLoaded', () => {
-      // 視覺淡入
       document.body.classList.add('ready');
 
-      // NVDA 提示（用 aria-live，不靠瀏覽器 TTS）
       const srHint = document.getElementById('srHint');
-      if (srHint) {
-        srHint.textContent =
-          '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次。';
-      }
+      srHint.textContent = '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。';
 
-      // 聚焦「進入第一關」按鈕 + 綁事件
-      const startBtn = document.getElementById('startBtn');
-      if (startBtn) {
-        startBtn.addEventListener('click', goLevel1);
-        startBtn.focus({ preventScroll: true });
-      }
+      const firstBlock = document.getElementById('a11yBlock');
+      const skipMain = document.getElementById('skipToMain');
+      const skipStart = document.getElementById('skipToStart');
+      const startBtn  = document.getElementById('startBtn');
+      const endSentinel = document.getElementById('endSentinel');
 
-      // Enter 也可直接開始（避免使用者還要移動焦點）
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); goLevel1(); }
+      // 初次進頁：放焦點在第一區塊
+      firstBlock?.focus({ preventScroll: true });
+
+      // Skip → 主內容（聚焦第一區塊）
+      function focusFirstBlock(e){ e?.preventDefault(); firstBlock?.focus(); }
+      skipMain.addEventListener('click', focusFirstBlock);
+      skipMain.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') focusFirstBlock(e);
+      });
+
+      // Skip → 直接開始按鈕（備援）
+      function focusStartBtn(e){ e?.preventDefault(); startBtn?.focus(); }
+      skipStart.addEventListener('click', focusStartBtn);
+      skipStart.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') focusStartBtn(e);
+      });
+
+      // 結尾哨兵：當使用者以 Tab 抵達內容尾端，自動把焦點移到開始按鈕
+      endSentinel.addEventListener('focus', () => {
+        // 先對讀屏說一聲，再把焦點移到按鈕（用 setTimeout 讓 aria-live 有時間播報）
+        srHint.textContent = '已到說明結尾，前往開始按鈕。';
+        setTimeout(() => { startBtn?.focus(); }, 0);
+      });
+
+      // 只在按鈕聚焦時才允許 Enter/Space 觸發開始，避免打斷閱讀
+      startBtn.addEventListener('click', goLevel1);
+      startBtn.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goLevel1(); }
       });
     });
   </script>
-
 </body>
 </html>
