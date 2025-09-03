@@ -5,7 +5,7 @@
     escapeAfterMs: 15000,
     bugMoveIntervalMs: 1000,
     spawnDelayMs: 1000,
-    pack: { hp: 0, coins: 0, ammo: { fire: 0, spray: 0, slipper: 0 } },
+    pack: { hp: 0, coins: 0, ammo: { fire: 0, spray: 0, slipper: 0, bait: 0 } },
     grid: { cols: 3, rows: 3 },
     // 票價預設
     ticketPriceByBug: { k1: 1, k2: 2, k3: 3, k4: 5, k5: 99 },
@@ -39,6 +39,7 @@
           fire:    (cfg.pack?.ammo?.fire    ?? DEFAULTS.pack.ammo.fire),
           spray:   (cfg.pack?.ammo?.spray   ?? DEFAULTS.pack.ammo.spray),
           slipper: (cfg.pack?.ammo?.slipper ?? DEFAULTS.pack.ammo.slipper),
+          bait:    (cfg.pack?.ammo?.bait    ?? DEFAULTS.pack.ammo.bait),
         }
       }
     };
@@ -64,7 +65,7 @@
       grid: { cols: 3, rows: 3 },
       allowedBugIds: ["k1", "k2"],
       targets: { k1: 7, k2: 5 },
-      pack: { hp: 10, coins: 0, ammo: { fire: 10, spray: 10, slipper: 10 } },
+      pack: { hp: 10, coins: 0, ammo: { fire: 0, spray: 0, slipper: 0 } },
       bugMoveIntervalMs: 1000,
       spawnDelayMs: 1000
       // 本關暫無家具
@@ -77,7 +78,7 @@
       allowedBugIds: ["k1", "k2", "k3"],
       targets: { k1: 10, k2: 7, k3: 3 },
       hazards: [{ type: "soap", count: 2, hpLoss: 3, armTimeMs: 2000, respawnMs: 6000 }],
-      pack: { hp: 10, coins: 0, ammo: { fire: 10, spray: 10, slipper: 10, bait: 5 } },
+      pack: { hp: 10, coins: 0, ammo: { fire: 0,  spray: 0,  slipper: 0,  bait: 5 } },
       bugMoveIntervalMs: 900,
       spawnDelayMs: 1000
       // 本關暫無家具
@@ -89,7 +90,7 @@
       grid: { cols: 7, rows: 7 },
       allowedBugIds: ["k1", "k2", "k3", "k4"],
       targets: { k1: 12, k2: 10, k3: 6, k4: 3 },
-      pack: { hp: 10, coins: 0, ammo: { fire: 10, spray: 10, slipper: 10, bait: 5 } },
+      pack: { hp: 10, coins: 0, ammo: { fire: 0,  spray: 0,  slipper: 0,  bait: 5 } },
 
       // 家具
       obstacles: [
@@ -109,7 +110,7 @@
       grid: { cols: 10, rows: 10 },
       allowedBugIds: ["k1", "k2", "k3", "k4", "k5"],
       targets: { k1: 15, k2: 10, k3: 7, k4: 5 },
-      pack: { hp: 10, coins: 0, ammo: { fire: 10, spray: 10, slipper: 10, bait: 5 } },
+      pack: { hp: 10, coins: 0, ammo: { fire: 0,  spray: 0,  slipper: 0,  bait: 5 } },
       bugMoveIntervalMs: 700,
       spawnDelayMs: 900,
 

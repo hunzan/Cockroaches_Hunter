@@ -1,6 +1,6 @@
 // js/core/game-core.js
 (function (g) {
-  const MAX_AMMO = 99;
+  const MAX_AMMO = 30;
 
   // === 全域音效對照（檔案放在 assets/sounds/ 底下） ===
   const SFX = {
@@ -116,47 +116,65 @@
       // HUD 舊欄位鏡像（非權威）
       this.state.player.recallVotes = this.state.player.recallVotes ?? this.state.votes;
 
-      // 非彈藥型欄位：cat/vote 只作使用次數統計
-      const W = this.state.player.weaponUsage = this.state.player.weaponUsage || {};
-      W.fire     = W.fire     ?? 0;
-      W.spray    = W.spray    ?? 0;
-      W.slipper  = W.slipper  ?? 0;
-      W.bait     = W.bait     ?? 5;  // 「??」不會把 0 變 5
-      W.cat      = W.cat      ?? 0;  // 統計用
-      W.vote     = W.vote     ?? 0;  // 統計用
-      delete W.recall;               // 避免語意混淆
+      // === 關卡開場補給（受上限；避免重複發放） ===
+      const LEVEL_STARTER = {
+        1: {},                                  // 第 1 關不額外送
+        2: { fire:5, spray:5, slipper:5 },      // 第 2 關各 +5
+        3: { fire:5, spray:5, slipper:5 },      // 第 3 關各 +5
+        4: { fire:5, spray:5, slipper:5 },      // 第 4 關各 +5
+        5: { fire:5, spray:5, slipper:5 },      // 第 5 關各 +5
+      };
 
-      // ★ 每關一次：起始彈藥（預設 10/10/10/5，可由 cfg 覆蓋）
-      const baseAmmo = this.cfg?.baseAmmo ?? { fire:10, spray:10, slipper:10, bait:5 };
-      const BASE_KEY = `baseApplied_L${level}`;
-      if (localStorage.getItem(BASE_KEY) !== "1") {
-        const W = this.state.player.weaponUsage || (this.state.player.weaponUsage = { fire:0,spray:0,slipper:0,bait:0 });
-        ["fire","spray","slipper","bait"].forEach(k => {
-          const add = baseAmmo[k] || 0;
-          W[k] = Math.min(MAX_AMMO, (W[k] || 0) + add);
-        });
-        this.savePlayer();
-        localStorage.setItem(BASE_KEY, "1");
+    function applyLevelStarterPack(core){
+      const S = core.state, P = S.player;
+      const lvl = Number(S.level || 1);
+      const onceKey = `starter:${lvl}`;
+      if (sessionStorage.getItem(onceKey) === '1') return; // 已發過，就不重複
+
+      const starter = LEVEL_STARTER[lvl] || {};
+      for (const [k, v] of Object.entries(starter)){
+        const n = Number(v) || 0;
+        if (!n) continue;
+        // ★ 受上限：每關固定補給也受 MAX_AMMO 限制
+        P.weaponUsage[k] = Math.min(MAX_AMMO, (P.weaponUsage[k] || 0) + n);
       }
 
-      // 套用本關 pack（只加一次）
-      const pack = (this.cfg && this.cfg.pack) ? this.cfg.pack : null;
-      const PACK_KEY = `packApplied_L${level}`;
-      const alreadyApplied = localStorage.getItem(PACK_KEY) === "1";
-      if (pack && !alreadyApplied) {
-        const P = this.state.player;
-        if (typeof pack.hp === "number")    P.hp    = Math.max(0, (P.hp    || 0) + pack.hp);
-        if (typeof pack.coins === "number") P.coins = Math.max(0, (P.coins || 0) + pack.coins);
-        const ammo = pack.ammo || {};
-        // ★ 確保有容器
-        P.weaponUsage = P.weaponUsage || { fire: 0, spray: 0, slipper: 0, bait: 0 };
-        ["fire","spray","slipper","bait"].forEach(w => {
-          const add = ammo[w] || 0;
-          P.weaponUsage[w] = Math.min(MAX_AMMO, (P.weaponUsage[w] || 0) + add);
-        });
-        this.savePlayer();
-        localStorage.setItem(PACK_KEY, "1");
-      }
+      // （可選）補給後先存一次，以免中途跳轉丟資料
+      core.savePlayer?.();
+
+      sessionStorage.setItem(onceKey, '1');
+    }
+
+    // 非彈藥型欄位：cat/vote 只作使用次數統計
+    const W = this.state.player.weaponUsage = this.state.player.weaponUsage || {};
+    W.fire    = W.fire    ?? 0;
+    W.spray   = W.spray   ?? 0;
+    W.slipper = W.slipper ?? 0;
+    W.bait    = W.bait    ?? 0;
+    W.cat     = W.cat     ?? 0;  // 統計用
+    W.vote    = W.vote    ?? 0;  // 統計用
+    delete W.recall;
+
+    // ★★ 在這一行之後立刻呼叫（重要）：開場補給「受上限」，只加一次
+    applyLevelStarterPack(this);
+
+    // 套用本關 pack（只加一次，受上限）
+    const pack = (this.cfg && this.cfg.pack) ? this.cfg.pack : null;
+    const PACK_KEY = `packApplied_L${level}`;
+    const alreadyApplied = localStorage.getItem(PACK_KEY) === "1";
+    if (pack && !alreadyApplied) {
+      const P = this.state.player;
+      if (typeof pack.hp === "number")    P.hp    = Math.max(0, (P.hp    || 0) + pack.hp);
+      if (typeof pack.coins === "number") P.coins = Math.max(0, (P.coins || 0) + pack.coins);
+      const ammo = pack.ammo || {};
+      P.weaponUsage = P.weaponUsage || { fire: 0, spray: 0, slipper: 0, bait: 0 };
+      ["fire","spray","slipper","bait"].forEach(w => {
+        const add = ammo[w] || 0;
+        P.weaponUsage[w] = Math.min(MAX_AMMO, (P.weaponUsage[w] || 0) + add);
+      });
+      this.savePlayer();
+      localStorage.setItem(PACK_KEY, "1");
+    }
 
       // DOM 綁定
       this.dom.area   = document.getElementById("gameArea");
@@ -1128,16 +1146,20 @@
             this.sfx('hit');
             await this.speakAsync(`${B.name} 被打中了！`);
 
-            // 只補當前武器，但不把「這一發」補回
-            const rw = B.reward || {};
-            const used = S.weapon;
-            let ammoGain = rw[used] || 0;
-            if (ammoGain > 0) ammoGain = Math.max(0, ammoGain - 1);
+        // —— 命中後處理獎勵 —— //
+        const rw = B.reward || {};
+        P.hp    += (rw.hp    || 0);
+        P.coins += (rw.coins || 0);
 
-            P.hp    += (rw.hp    || 0);
-            P.coins += (rw.coins || 0);
-            P.weaponUsage[used] = Math.min(MAX_AMMO, (P.weaponUsage[used] || 0) + ammoGain);
-            this.updateUI();
+        // 只在「擊殺獎勵」時受上限控制
+        ['fire','spray','slipper','bait'].forEach(k => {
+          const gain = rw[k] || 0;
+          if (gain > 0) {
+            P.weaponUsage[k] = Math.min(MAX_AMMO, (P.weaponUsage[k] || 0) + gain);
+          }
+        });
+
+        this.updateUI();
 
               // ★ 在這裡通知共用出怪指揮官
             window.dispatchEvent(new CustomEvent('bug-killed'));
