@@ -3,8 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>進擊的蟑螂 - 開場</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
+  <!-- audio-unlocker 是全域工具，維持傳統 script 載入 -->
   <script src="js/core/audio-unlocker.js"></script>
   <style>
     body {
@@ -23,12 +25,10 @@
       color: #fff;
       font-size: 2rem;
       text-shadow: 2px 2px 4px #000;
-      opacity: 0;                /* 初始隱藏 */
-      animation: fadeIn 3s forwards; /* 3 秒淡入 */
+      opacity: 0;
+      animation: fadeIn 3s forwards;
     }
-    @keyframes fadeIn {
-      to { opacity: 1; }
-    }
+    @keyframes fadeIn { to { opacity: 1; } }
   </style>
 </head>
 <body>
@@ -39,24 +39,31 @@
 
   <audio id="bgm" src="assets/sounds/start_theme.mp3" preload="auto" playsinline></audio>
 
-        <!-- 在 BGM 之後初始化/登記 -->
-  <script>
-    AudioFX.init();
-    AudioFX.register(document.getElementById('bgm'));
-  </script>
-
-  <script>
-    const bgmEl = document.getElementById('bgm');  // ← 換名字，避免重複宣告
+  <!-- 用 ES Module 寫啟動邏輯 -->
+  <script type="module">
+    // AudioFX 由 audio-unlocker.js 掛在全域
+    const bgmEl = document.getElementById('bgm');
     let started = false;
+
+    function primeAudio() {
+      try {
+        // 不同版本的解鎖器命名可能不同，兩個都試
+        if (window.AudioFX?.init)  window.AudioFX.init();
+        if (window.AudioFX?.register) window.AudioFX.register(bgmEl);
+        if (window.AudioFX?.ensure) window.AudioFX.ensure();
+
+        if (window.AudioUnlocker?.prime) window.AudioUnlocker.prime();
+      } catch {}
+    }
 
     function startGame() {
       if (started) return;
       started = true;
 
-      // 保險：互動發生時做一次解鎖
-      try { AudioFX.ensure(); } catch (_) {}
+      // 行動端音訊解鎖
+      primeAudio();
 
-      // 播放 BGM（若仍被阻擋就算了，不影響導頁）
+      // 嘗試播放 BGM（若被瀏覽器阻擋也不影響導頁）
       bgmEl.play().catch(() => {});
 
       // 稍等一下再導頁
@@ -65,10 +72,10 @@
       }, 300);
     }
 
-    document.addEventListener('keydown',    startGame, { once:true });
-    document.addEventListener('click',      startGame, { once:true });
-    document.addEventListener('touchstart', startGame, { once:true, passive:true });
+    // 首次使用者互動觸發
+    document.addEventListener('keydown',    startGame, { once: true });
+    document.addEventListener('click',      startGame, { once: true });
+    document.addEventListener('touchstart', startGame, { once: true, passive: true });
   </script>
-
 </body>
 </html>

@@ -3,86 +3,147 @@
 <head>
   <meta charset="UTF-8" />
   <title>蟑螂圖鑑</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
   <script src="js/core/audio-unlocker.js"></script>
   <style>
-    body { margin: 0; padding: 0; background: #0b0b0b url("assets/images/start_bg.png") center/cover no-repeat fixed; color: #fff; }
-    .wrap { max-width: 960px; margin: 0 auto; padding: 1.2rem; }
-    h1 { margin: .5rem 0 1rem; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
-    .card { background: rgba(0,0,0,.45); border: 1px solid #ffffff33; border-radius: 12px; padding: 12px; }
-    .card img { width: 100%; height: auto; border-radius: 10px; display: block; }
-    .meta { font-size: .95rem; line-height: 1.6; }
-    .tag { display: inline-block; margin-right: .4rem; margin-bottom: .2rem; padding: .1rem .5rem; border-radius: 999px; background: #ffffff22; font-size: .85rem; }
-    .btnbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
-    .btn { background: #ffd452; color: #222; border: none; border-radius: 8px; padding: .5rem .9rem; cursor: pointer; }
-    .btn:hover { filter: brightness(1.05); }
+    :root{
+      --accent:#ffd452;
+      --glass: rgba(255,255,255,.06);
+      --glass-strong: rgba(255,255,255,.12);
+      --bd: rgba(255,255,255,.18);
+    }
+    /* 基底（黑底＋背圖；行動裝置最佳化） */
+    body {
+      margin: 0;
+      color: #fff;
+      background: #0b0b0b url("assets/images/start_bg.png") center/cover no-repeat fixed;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap { max-width: 1000px; margin: 0 auto; padding: 16px; }
+    h1 { margin: .5rem 0 .6rem; text-shadow: 0 2px 10px rgba(0,0,0,.6); }
+    p.lead { margin: 0 0 .75rem; opacity: .9 }
 
-    /* --- 無障礙：skip link（隱藏，聚焦時顯示） --- */
-    .skip-link {
-      position: absolute; left: -9999px; top: 0;
-      background: #ffd452; color: #111; padding: .5rem .75rem; border-radius: 8px;
-      text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    /* 卡片網格（RWD） */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 16px;
     }
-    .skip-link:focus, .skip-link:focus-visible {
-      left: 12px; top: 12px; z-index: 1000;
-      outline: 2px solid #222;
+    @media (max-width: 520px){
+      .grid { grid-template-columns: 1fr; gap: 14px; }
     }
-    /* 聚焦樣式，讓鍵盤使用者看得到 */
+
+    .card {
+      background: rgba(0,0,0,.45);
+      border: 1px solid #ffffff33;
+      border-radius: 14px;
+      padding: 12px;
+      display: grid;
+      grid-template-rows: auto auto auto 1fr;
+      transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease;
+      cursor: pointer; /* 行動裝置提示可點 */
+      touch-action: manipulation;
+    }
+    .card:hover { transform: translateY(-2px); box-shadow:0 6px 20px rgba(0,0,0,.35); }
     .card:focus, .card:focus-visible {
-      outline: 3px solid #ffd452; outline-offset: 2px;
+      outline: 3px solid var(--accent);
+      outline-offset: 2px;
+      box-shadow: 0 0 0 3px rgba(255,212,82,.25);
+      border-color: var(--accent);
     }
-    /* 只給讀屏用的隱藏 class */
+    .card img { width: 100%; height: auto; border-radius: 10px; display: block; }
+
+    .meta { font-size: .95rem; line-height: 1.6; }
+    .tag {
+      display: inline-block; margin-right: .4rem; margin-bottom: .2rem;
+      padding: .1rem .5rem; border-radius: 999px; background: #ffffff22;
+      font-size: .85rem;
+    }
+
+    .btnbar { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+    .btn {
+      background: var(--accent); color: #222; border: none; border-radius: 999px;
+      padding: .65rem 1.1rem; cursor: pointer; font-weight: 800;
+      box-shadow: 0 3px 12px rgba(0,0,0,.35);
+      touch-action: manipulation;
+    }
+    .btn:active { transform: translateY(1px); }
+
+    /* Skip link（鍵盤聚焦才顯示） */
+    .skip-link{
+      position: absolute; left: -9999px; top: 0;
+      background: var(--accent); color:#111; padding: .5rem .75rem; border-radius: 10px;
+      text-decoration: none; box-shadow: 0 2px 10px rgba(0,0,0,.35);
+    }
+    .skip-link:focus, .skip-link:focus-visible { left: 12px; top: 12px; z-index: 1000; outline: 2px solid #222; }
+
+    /* sr-only */
     .sr-only {
-      position: absolute !important;
-      width: 1px; height: 1px; padding: 0; margin: -1px;
+      position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
       overflow: hidden; clip: rect(0, 0, 1px, 1px); white-space: nowrap; border: 0;
+    }
+
+    /* 降低動效 */
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; transition: none !important; }
     }
   </style>
 </head>
 <body class="guide">
-  <!-- 隱藏的跳轉連結：聚焦時才顯示 -->
+  <!-- 跳主內容 -->
   <a href="#main" class="skip-link" id="skipToMain">跳到主內容</a>
 
   <main class="wrap" id="main" tabindex="-1" aria-label="蟑螂圖鑑主內容">
     <h1>蟑螂圖鑑</h1>
-    <p>出場角色與擊殺獎勵說明：</p>
+    <p class="lead">出場角色與擊殺獎勵說明：</p>
 
     <!-- 讀屏用 live 區（宣告跳轉與卡片提示） -->
     <div id="live" class="sr-only" aria-live="polite" aria-atomic="true"></div>
 
-    <section class="grid" id="bugGrid" aria-label="蟑螂圖鑑卡片列表"></section>
+    <!-- 用 list/listitem 的語意 -->
+    <section>
+      <div class="grid" id="bugGrid" role="list" aria-label="蟑螂圖鑑卡片列表"></div>
+    </section>
 
     <div class="btnbar">
-      <button class="btn" id="nextBtn" onclick="location.href='level_intro_01.html'">前往第 1 關</button>
+      <button class="btn" id="nextBtn" type="button" onclick="location.href='level_intro_01.html'">前往第 1 關</button>
     </div>
 
-    <!-- 播音用 audio（若有語音檔需求） -->
+    <!-- 播音用（若無 AudioFX 也能 fallback） -->
     <audio id="voicePlayer" src="" hidden></audio>
   </main>
 
-  <audio id="bgm" src="assets/sounds/cockroach_intro.mp3" loop preload="auto"></audio>
+  <!-- 背景音樂 -->
+  <audio id="bgm" src="assets/sounds/cockroach_intro.mp3" loop preload="auto" playsinline></audio>
 
-  <!-- 在 BGM 之後初始化/登記 -->
+  <!-- 音訊解鎖 / BGM 登記 -->
   <script>
-    // 1) 初始化（可早就呼叫，多次也沒事）
     AudioFX.init();
-    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
-    const bgm = document.getElementById('bgm');
-    AudioFX.register(bgm);
-    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
+    AudioFX.register(document.getElementById('bgm'));
     window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
   </script>
 
-  <!-- 先載入資料 -->
+  <!-- 先載入蟑螂資料 -->
   <script src="js/content/bugs.js"></script>
 
+  <!-- 互動後淡入 BGM -->
   <script>
     (function () {
       const bgm = document.getElementById('bgm');
+      function fadeInAudio(audio, target = 0.6, durMs = 900) {
+        if (!audio) return;
+        audio.volume = 0;
+        const steps = 18, delta = target / steps, stepMs = Math.ceil(durMs / steps);
+        let i = 0;
+        const timer = setInterval(() => {
+          i++; audio.volume = Math.min(target, audio.volume + delta);
+          if (i >= steps) clearInterval(timer);
+        }, stepMs);
+      }
       function tryPlay() {
-        bgm?.play().catch(()=>{ /* 使用者還沒互動就算了 */ });
+        bgm?.play()?.then(()=>fadeInAudio(bgm, 0.6, 900)).catch(()=>{});
         document.removeEventListener('click', tryPlay);
         document.removeEventListener('keydown', tryPlay);
         document.removeEventListener('touchstart', tryPlay);
@@ -93,128 +154,161 @@
     })();
   </script>
 
+  <!-- 圖鑑渲染與互動 -->
   <script>
-  // 統一的鍵→中文對照
-  const LABELS = {
-    fire: "噴火槍",
-    spray: "香氛噴霧",
-    slipper: "藍白拖",
-    flamethrower: "火焰噴射器",
-    bait: "毒餌",
-    vote: "被罷免",
-    puzzle_lose: "比猜謎輸掉",
-    cat: "貓"
-  };
+    // 統一的鍵→中文對照（無 poison_box）
+    const LABELS = {
+      fire: "噴火槍",
+      spray: "香氛噴霧",
+      slipper: "藍白拖",
+      flamethrower: "火焰噴射器",
+      bait: "毒餌",
+      vote: "被罷免",
+      puzzle_lose: "比猜謎輸掉",
+      cat: "貓"
+    };
 
-  function dropText(b) {
-    const r = b.reward || {};
-    const parts = [];
-    if (r.hp)    parts.push(`🩸 血量 +${r.hp}`);
-    if (r.coins) parts.push(`🪙 金幣 +${r.coins}`);
-    const possible = ["fire","spray","slipper","flamethrower","bait","poison_box","vote","cat"];
-    possible.forEach(k => { if (r[k]) parts.push(`${LABELS[k] || k} +${r[k]}`); });
-    return parts.length ? parts.join("、") : "—";
-  }
-
-  function damageText(b) {
-    const d = b.damage || {};
-    const parts = [];
-    if (d.hp)    parts.push(`🩸 血量 -${d.hp}`);
-    if (d.coins) parts.push(`🪙 金幣 -${d.coins}`);
-    return parts.length ? parts.join("、") : "—";
-  }
-
-  // ===== 產生圖片替代文字 =====
-  function buildImageAlt(b) {
-    if (b.imageAlt && typeof b.imageAlt === 'string') return b.imageAlt.trim();
-    const bits = [];
-    if (b.description) bits.push(b.description.replace(/\s+/g, ' ').trim());
-    if (b.title) bits.push(b.title.replace(/\s+/g, ' ').trim());
-    let alt = bits.filter(Boolean).join("，");
-    if (!alt) alt = "正在出沒中的蟑螂，姿勢詭祕。";
-    if (alt.length > 120) alt = alt.slice(0, 118) + "…";
-    return alt;
-  }
-
-  (function renderGuide() {
-    const list = (window.bugs || []);
-    const grid = document.getElementById("bugGrid");
-    if (!grid) return;
-
-    grid.innerHTML = list.map((b, idx) => {
-      const weaknesses = (b.weaknesses || [])
-        .map(w => LABELS[w] || w)
-        .map(name => `<span class="tag">${name}</span>`).join("");
-
-      const imgAlt = buildImageAlt(b);
-      const hid = `bug-h-${idx}`;
-      const did = `bug-d-${idx}`;
-      const aid = `bug-a-${idx}`;
-
-      return `
-        <article
-          class="card"
-          role="article"
-          tabindex="0"
-          aria-labelledby="${hid}"
-          aria-describedby="${did} ${aid}"
-          data-index="${idx}"
-        >
-          <img src="${b.image}" alt="${imgAlt}" loading="lazy" decoding="async">
-          <h2 id="${hid}" style="margin:.5rem 0 .25rem">${b.name}</h2>
-          <div id="${did}" class="meta">${b.title ? `${b.title}<br>` : ""}${b.description || ""}</div>
-          <div class="meta" style="margin-top:.4rem">弱點：${weaknesses || "—"}</div>
-          <div class="meta" style="margin-top:.4rem">被咬的後果：${damageText(b)}</div>
-          <div id="${aid}" class="meta" style="margin-top:.4rem">擊殺獎勵：${dropText(b)}</div>
-        </article>
-      `;
-    }).join("");
-
-    // === 跳到主內容：把焦點帶到第一張卡片，並宣告給讀屏 ===
-    const skip = document.getElementById('skipToMain');
-    const live = document.getElementById('live');
-    const firstCard = grid.querySelector('.card');
-    const nextBtn = document.getElementById('nextBtn');
-
-    function announce(msg){
-      if (!live) return;
-      // 重設內容以觸發 aria-live
-      live.textContent = '';
-      // 用 setTimeout 確保 NVDA 抓到更新
-      setTimeout(()=>{ live.textContent = msg; }, 0);
+    function dropText(b) {
+      const r = b.reward || {};
+      const parts = [];
+      if (r.hp)    parts.push(`🩸 血量 +${r.hp}`);
+      if (r.coins) parts.push(`🪙 金幣 +${r.coins}`);
+      const possible = ["fire","spray","slipper","flamethrower","bait","vote","cat"];
+      possible.forEach(k => { if (r[k]) parts.push(`${LABELS[k] || k} +${r[k]}`); });
+      return parts.length ? parts.join("、") : "—";
     }
 
-    function focusFirstCard() {
-      if (!firstCard) return;
-      // 讓讀屏知道我們真的來到主內容與第一張卡
-      announce('已跳到主內容。即將介紹第一張卡片。');
-      firstCard.focus();
+    function damageText(b) {
+      const d = b.damage || {};
+      const parts = [];
+      if (d.hp)    parts.push(`🩸 血量 -${d.hp}`);
+      if (d.coins) parts.push(`🪙 金幣 -${d.coins}`);
+      return parts.length ? parts.join("、") : "—";
     }
 
-    // 點擊或按 Enter 皆可
-    skip.addEventListener('click', (e)=> {
-      e.preventDefault();
-      focusFirstCard();
-    });
-    skip.addEventListener('keydown', (e)=>{
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        focusFirstCard();
+    // 產生圖片替代文字（上限 120 字）
+    function buildImageAlt(b) {
+      if (b.imageAlt && typeof b.imageAlt === 'string') return b.imageAlt.trim();
+      const bits = [];
+      if (b.description) bits.push(b.description.replace(/\s+/g, ' ').trim());
+      if (b.title) bits.push(b.title.replace(/\s+/g, ' ').trim());
+      let alt = bits.filter(Boolean).join("，");
+      if (!alt) alt = "正在出沒中的蟑螂，姿勢詭祕。";
+      if (alt.length > 120) alt = alt.slice(0, 118) + "…";
+      return alt;
+    }
+
+    (function renderGuide() {
+      const list = (window.bugs || []);
+      const grid = document.getElementById("bugGrid");
+      if (!grid) return;
+
+      grid.innerHTML = list.map((b, idx) => {
+        const weaknesses = (b.weaknesses || [])
+          .map(w => LABELS[w] || w)
+          .map(name => `<span class="tag">${name}</span>`).join("");
+
+        const imgAlt = buildImageAlt(b);
+        const hid = `bug-h-${idx}`;
+        const did = `bug-d-${idx}`;
+        const aid = `bug-a-${idx}`;
+
+        return `
+          <article
+            class="card"
+            role="listitem"
+            tabindex="0"
+            aria-labelledby="${hid}"
+            aria-describedby="${did} ${aid}"
+            data-index="${idx}"
+          >
+            <img src="${b.image}" alt="${imgAlt}" loading="lazy" decoding="async">
+            <h2 id="${hid}" style="margin:.5rem 0 .25rem">${b.name}</h2>
+            <div id="${did}" class="meta">${b.title ? `${b.title}<br>` : ""}${b.description || ""}</div>
+            <div class="meta" style="margin-top:.4rem">弱點：${weaknesses || "—"}</div>
+            <div class="meta" style="margin-top:.4rem">被咬的後果：${damageText(b)}</div>
+            <div id="${aid}" class="meta" style="margin-top:.4rem">擊殺獎勵：${dropText(b)}</div>
+          </article>
+        `;
+      }).join("");
+
+      // === 跳到主內容：把焦點帶到第一張卡片，並宣告給讀屏 ===
+      const skip = document.getElementById('skipToMain');
+      const live = document.getElementById('live');
+      const firstCard = grid.querySelector('.card');
+
+      function announce(msg){
+        if (!live) return;
+        live.textContent = '';
+        setTimeout(()=>{ live.textContent = msg; }, 0);
       }
-    });
+      function focusFirstCard() {
+        if (!firstCard) return;
+        announce('已跳到主內容。即將介紹第一張卡片。');
+        firstCard.focus();
+      }
+      skip.addEventListener('click', (e)=>{ e.preventDefault(); focusFirstCard(); });
+      skip.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusFirstCard(); }
+      });
 
-    // 每當卡片取得焦點時，播報簡短提示（避免太冗長）
-    grid.addEventListener('focusin', (e)=>{
-      const card = e.target.closest('.card');
-      if (!card) return;
-      const idx = Number(card.getAttribute('data-index') || 0);
-      const h = card.querySelector('h2')?.textContent?.trim() || `卡片 ${idx+1}`;
-      announce(`第 ${idx+1} 張卡片：${h}。按 Tab 可繼續聽下一張。`);
-    });
+      // === 卡片互動：點擊／Enter／Space 朗讀重點（桌機＋行動）
+      (function bindCardA11y() {
+        const voice = document.getElementById("voicePlayer");
 
-    // 鍵盤友善：在最後一張卡片按 Tab，自然會到下一步按鈕
-    //（DOM 順序已確保按鈕在卡片後方，所以無需額外代碼）
-  })();
+        function speak(text){
+          if (!('speechSynthesis' in window) || !text) return;
+          try{
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.lang = "zh-TW"; u.rate = 1.4; u.pitch = 1.0; u.volume = 1.0;
+            speechSynthesis.speak(u);
+          }catch(_){}
+        }
+        function playBugVoiceIfAny(bugName){
+          // 可選：若你為圖鑑準備 voice/intro 檔，可放 assets/sounds/guide/{slug}.mp3
+          // 沒檔案時不會有聲音，但不影響
+          try{
+            const slug = (bugName || "").toLowerCase().replace(/\s+/g,'_');
+            const url = `${window.ASSETS_ROOT || ""}assets/sounds/guide/${slug}.mp3`;
+            if (window.AudioFX?.play) {
+              AudioFX.play(url);
+            } else if (voice) {
+              voice.pause(); voice.currentTime = 0; voice.src = url; voice.play().catch(()=>{});
+            }
+          }catch(_){}
+        }
+        function handleActivate(card){
+          const name = card.querySelector('h2')?.textContent?.trim() || '';
+          const desc = card.querySelector('.meta')?.textContent?.trim() || '';
+          const metas = Array.from(card.querySelectorAll('.meta')).slice(1,4);
+          const tail = metas.map(el => el.textContent.trim()).filter(Boolean).join('；');
+          announce(`介紹：${name}`);
+          speak(`${name}。${desc}。${tail}。`);
+          playBugVoiceIfAny(name);
+        }
+
+        grid.addEventListener('click', (e)=>{
+          const card = e.target.closest('.card'); if (!card) return;
+          handleActivate(card);
+        });
+        grid.addEventListener('keydown', (e)=>{
+          if (e.altKey || e.ctrlKey || e.metaKey) return;
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          const card = e.target.closest('.card'); if (!card) return;
+          e.preventDefault();
+          handleActivate(card);
+        });
+
+        // 卡片聚焦時，給簡短提示（避免冗長）
+        grid.addEventListener('focusin', (e)=>{
+          const card = e.target.closest('.card'); if (!card) return;
+          const idx = Number(card.getAttribute('data-index') || 0);
+          const h = card.querySelector('h2')?.textContent?.trim() || `卡片 ${idx+1}`;
+          announce(`第 ${idx+1} 張卡片：${h}。按 Enter 可聽詳細說明。`);
+        });
+      })();
+    })();
   </script>
 </body>
 </html>

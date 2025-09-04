@@ -3,114 +3,227 @@
 <head>
   <meta charset="UTF-8" />
   <title>第 1 關：戰鬥開始！ - 進擊的蟑螂</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
+
   <link rel="stylesheet" href="style.css" />
   <script src="js/core/modes.js"></script>
   <script>window.ASSETS_ROOT = "/";</script>
   <script src="js/core/audio-unlocker.js"></script>
+
   <style>
+    html, body { min-height: 100svh; }
     body {
       margin: 0;
       padding: 0;
       background: url("assets/images/game_bg1.png") no-repeat center center fixed;
-      background-size: cover; /* 讓圖片填滿螢幕 */
+      background-size: cover;
       font-family: sans-serif;
+      color: #111;
     }
-    #gameArea {
+
+    /* 桌機/一般：正常排版；行動版會把狀態做成頂部膠囊、縮小標題 */
+    main { padding: .75rem 1rem 1rem; }
+    h1 {
+      text-align:center; color:#fff;
+      text-shadow:0 2px 8px rgba(0,0,0,.45);
+      margin:.75rem 0;
+    }
+
+    /* === 遊戲舞台（第一關單列 7 格；窄螢幕可自動換行） === */
+    #gameArea{
       display: flex;
       justify-content: center;
-      margin: 1rem auto;
-      gap: 0.5rem;
+      margin: .75rem auto 0;
+      gap: 0.45rem;
+      outline: none;
+      touch-action: none;               /* 手勢自處理，避免側滑返回 */
+      -webkit-tap-highlight-color: transparent;
+      max-width: min(94vw, 760px);
+      flex-wrap: wrap;
     }
     .tile {
-      width: 50px;
-      height: 50px;
+      width: clamp(38px, 8vw, 52px);
+      height: clamp(38px, 8vw, 52px);
       border: 2px solid #333;
-      font-size: 1.5rem;
+      font-size: 1.02rem;
       text-align: center;
-      line-height: 50px;
-      background-color: #eee;
+      line-height: clamp(38px, 8vw, 52px);
+      background:rgba(238,238,238,0.6);  /* ← 半透明灰色 */
+      border-radius: 8px;
+      user-select: none;
     }
     .tile.player { background-color: #cce5ff; }
     .tile.bug    { background-color: #f8d7da; }
-    #touchControls {
-      margin: 1rem auto;
-      text-align: center;
+
+    #message {
+      margin-top: .6rem; font-weight: bold; text-align: center;
+      color:#fff; text-shadow:0 2px 8px rgba(0,0,0,.45);
+      min-height: 1.2em;
     }
-    #touchControls button { font-size: 1rem; margin: 0.3rem; }
-    #message { margin-top: 1rem; font-weight: bold; text-align: center; }
-      /* 視障友善的隱形樣式（螢幕閱讀器可讀） */
-  .sr-only {
-    position:absolute !important;
-    width:1px;height:1px;
-    padding:0;margin:-1px;
-    overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
-  }
-    /* 勇者貼圖（右下角裝飾，不擋操作） */
-  .hero-sticker{
-    position: fixed;
-    right: 12px;
-    bottom: 12px;
-    width: min(22vw, 180px);
-    max-width: 220px;
-    height: auto;
-    opacity: .95;
-    pointer-events: none;                 /* ★ 不攔截滑鼠/觸控 */
-    filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
-    z-index: 10;
-  }
-  @media (max-width: 480px){
-    .hero-sticker{ width: 28vw; opacity: .9; }
-  }
+
+    /* 視障友善隱形樣式 */
+    .sr-only {
+      position:absolute !important;
+      width:1px;height:1px;
+      padding:0;margin:-1px;
+      overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+
+    /* Skip link */
+    .skip-link {
+      position: fixed; left: 12px; top: -9999px;
+      background: #ffd452; color: #111; padding: .5rem .75rem; border-radius: 8px;
+      text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.3); z-index: 1000;
+    }
+    .skip-link:focus, .skip-link:focus-visible { top: 12px; outline: 2px solid #222; }
+
+    /* 右下勇者貼紙：不攔截點擊，固定於右下 */
+    .hero-sticker{
+      position: fixed;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      width: min(21vw, 160px);
+      max-width: 200px;
+      height: auto;
+      opacity: .95;
+      pointer-events: none;
+      filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+      z-index: 10;
+    }
+    @media (max-width: 480px){
+      .hero-sticker{ width: 26vw; opacity: .9; }
+    }
+
+    /* 狀態列（桌機用） */
+    #playerStatus {
+      margin: .5rem auto 0;
+      padding: .5rem .75rem;
+      max-width: 960px;
+      background: rgba(255,255,255,.15);
+      border-radius: 10px;
+      color:#fff;
+      text-shadow:0 2px 8px rgba(0,0,0,.45);
+    }
+
+    /* ===== 行動版極簡：縮小標題 + 狀態浮動膠囊 ===== */
+    @media (pointer: coarse) {
+      h1{
+        font-size: 1.05rem;
+        font-weight: 600;
+        margin: .25rem 0 .1rem;
+      }
+      #playerStatus{
+        position: fixed;
+        top: calc(8px + env(safe-area-inset-top));
+        left: 8px; right: 8px; z-index: 18;
+        display:flex; flex-wrap:wrap; gap:.25rem .6rem; align-items:center;
+        padding:.35rem .6rem;
+        background: rgba(0,0,0,.35);
+        backdrop-filter: blur(6px);
+        -webkit-backdrop-filter: blur(6px);
+        border-radius: 12px;
+        font-size: .9rem; line-height: 1.2; color:#fff;
+        text-shadow: 0 1px 3px rgba(0,0,0,.35);
+      }
+      main{ padding-top: calc(2.6rem + env(safe-area-inset-top)); }
+      .tile{
+        width: clamp(36px, 7.4vw, 50px);
+        height: clamp(36px, 7.4vw, 50px);
+        line-height: clamp(36px, 7.4vw, 50px);
+        font-size: .98rem;
+        border-radius: 7px;
+      }
+    }
+
+    /* === 手機專用：左下「武器選單」浮動鈕 + 直列子選單 === */
+    #weaponToggle{
+      position: fixed;
+      left: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      z-index: 25;
+      background: #ffd452;
+      color: #222;
+      border: none;
+      border-radius: 50%;
+      width: 52px; height: 52px;
+      font-size: 1.25rem;
+      box-shadow: 0 3px 10px rgba(0,0,0,.3);
+      display: none;          /* 預設桌機隱藏 */
+    }
+    #weaponMenu{
+      position: fixed;
+      left: 12px;
+      bottom: calc(72px + env(safe-area-inset-bottom));
+      display: none;
+      flex-direction: column;
+      gap: .35rem;
+      z-index: 26;
+    }
+    #weaponMenu button{
+      background: #ffd452;
+      color: #222;
+      border: none; border-radius: 10px;
+      font-size: .9rem;
+      padding: .42rem .55rem;
+      min-width: 68px;
+      box-shadow: 0 3px 8px rgba(0,0,0,.25);
+    }
+    #weaponMenu button:disabled{ opacity:.55; filter:saturate(.7); }
+    #weaponToggle{ display: inline-flex; align-items:center; justify-content:center; }
+    }
   </style>
 </head>
 <body class="stage1">
+
+  <a href="#weaponToggle" class="skip-link">跳到武器選單</a>
+
   <main>
     <h1>儲藏室有怪聲音...</h1>
 
-    <!-- 玩家狀態區塊 -->
-    <section id="playerStatus" aria-label="玩家狀態" style="margin: 1rem 0; font-weight: bold;">
+    <section id="playerStatus" aria-label="玩家狀態">
       <div>勇者：<span id="playerName">---</span></div>
       <div>血量：<span id="playerHP">---</span></div>
       <div>金幣：<span id="playerCoins">---</span></div>
       <div><span id="weaponStatus">---</span></div>
-        <!-- 給螢幕報讀器用的隱形摘要 -->
       <div id="srStatus" aria-live="polite" aria-atomic="true" role="status" class="sr-only"></div>
     </section>
+    <br><br>
 
-    <!-- 觸控控制 -->
-    <div id="touchControls">
-      <button onclick="moveLeft()">⬅️ 左移</button>
-      <button onclick="moveRight()">➡️ 右移</button>
-      <button onclick="scanArea()">🔍 掃描</button>
-      <button onclick="attack()">🔥 攻擊</button>
-      <button onclick="changeWeapon('fire')">1️⃣ 噴火槍</button>
-      <button onclick="changeWeapon('spray')">2️⃣ 香氛噴霧</button>
-      <button onclick="changeWeapon('slipper')">3️⃣ 藍白拖</button>
-    </div>
+    <p id="a11yHelp" class="sr-only">
+      使用方向鍵左右移動，空白鍵掃描，Enter 攻擊；行動裝置可左右滑動移動、單擊掃描、雙擊攻擊。數字 1–7 切換武器。
+    </p>
 
-    <!-- 遊戲場地 -->
     <div id="gameArea" role="group" aria-describedby="a11yHelp" aria-label="遊戲場地，共橫向七格" tabindex="0"></div>
 
     <div id="message" aria-live="assertive"></div>
 
-    <!-- 播音用 audio -->
     <audio id="voicePlayer" src="" hidden></audio>
   </main>
-  <audio id="bgm" src="assets/sounds/game_01.mp3" loop preload="auto"></audio> <!-- 01 關 -->
 
-    <!-- 在 BGM 之後初始化/登記 -->
+  <!-- 手機：武器浮動按鈕 + 子選單 -->
+  <button id="weaponToggle" aria-label="武器選單" aria-haspopup="menu" aria-expanded="false">⚔️</button>
+  <div id="weaponMenu" role="menu" aria-label="武器選單">
+    <button role="menuitem" data-wpn="fire"    aria-keyshortcuts="1">1️⃣ 噴火槍</button>
+    <button role="menuitem" data-wpn="spray"   aria-keyshortcuts="2">2️⃣ 噴霧</button>
+    <button role="menuitem" data-wpn="slipper" aria-keyshortcuts="3">3️⃣ 藍白拖</button>
+    <button role="menuitem" data-wpn="bait"    aria-keyshortcuts="4" disabled>4️⃣ 毒餌</button>
+    <button role="menuitem" data-wpn="cat"     aria-keyshortcuts="5" disabled>5️⃣ 養貓</button>
+    <button role="menuitem" data-wpn="vote"    aria-keyshortcuts="6" disabled>6️⃣ 連署</button>
+    <button role="menuitem" data-wpn="recall"  aria-keyshortcuts="7" disabled>7️⃣ 罷免</button>
+  </div>
+
+  <!-- BGM -->
+  <audio id="bgm" src="assets/sounds/game_01.mp3" loop preload="auto"></audio>
+
   <script>
-    // 1) 初始化（可早就呼叫，多次也沒事）
+    /* BGM 解鎖與登記 */
     AudioFX.init();
-
-    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
     const bgm = document.getElementById('bgm');
     AudioFX.register(bgm);
-
-    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
     window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
   </script>
 
+  <!-- 內容與核心 -->
   <script src="js/content/bugs.js"></script>
   <script src="js/content/levels.js"></script>
 
@@ -128,107 +241,76 @@
   <script src="js/core/retry.js"></script>
   <script> Retry.rememberLevel(); </script>
 
+  <!-- 鍵盤初始化（boot 完成/或 game-ready 後） -->
   <script>
-    // boot 完成/或 game-ready 之後呼叫一次
     document.addEventListener('game-ready', () => {
-      const stage = document.getElementById('gameArea'); // ★ 先抓 DOM
+      const stage = document.getElementById('gameArea');
       Keys.init({
         stageEl: stage,
         scanFn: () => window.scanArea?.(),
-        activeGuardFn: () => window.gameActive !== false // 可選：遇到測驗/對話時停用
+        activeGuardFn: () => window.gameActive !== false
       });
     }, { once:true });
   </script>
 
+  <!-- A11Y 初始化 -->
   <script>
-  /* === A11Y 初始化：進場焦點提示 + SR 狀態報讀仲裁 === */
-  document.addEventListener('game-ready', () => {
-    const stageEl = document.getElementById('gameArea');
-    window.__focusHints = A11YFocusHints.install({
-      stageEl,
-      hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。',
+    document.addEventListener('game-ready', () => {
+      const stageEl = document.getElementById('gameArea');
+      window.__focusHints = A11YFocusHints.install({
+        stageEl,
+        hintText: '提示：已進入遊戲。NVDA 使用者請按 NVDA 加 空白，切換到焦點模式，再用方向鍵操作。'
+      });
+
+      window.__arb = A11YArbiter.install({
+        hpEl:   document.getElementById('playerHP'),
+        coinEl: document.getElementById('playerCoins'),
+        wpnEl:  document.getElementById('weaponStatus'),
+        srEl:   document.getElementById('srStatus'),
+      });
+
+      window.__sc = SpawnConductor.install({
+        srEl: document.getElementById('srStatus'),
+      });
     });
 
-    window.__arb = A11YArbiter.install({
-      hpEl:   document.getElementById('playerHP'),
-      coinEl: document.getElementById('playerCoins'),
-      wpnEl:  document.getElementById('weaponStatus'),
-      srEl:   document.getElementById('srStatus'),
+    window.addEventListener('beforeunload', () => {
+      try { window.__focusHints?.destroy(); } catch(_){}
     });
-
-    window.__sc = SpawnConductor.install({
-      srEl: document.getElementById('srStatus'),
-      // ttsBusyFn: () => (Core._speechDepth > 0) || (speechSynthesis?.speaking)
-    });
-  });
-
-  // 切頁或重載時，善後還原 role/tabindex 等
-  window.addEventListener('beforeunload', () => {
-    try { window.__focusHints?.destroy(); } catch(_){}
-  });
   </script>
 
+  <!-- 勇者名稱貼圖補丁（維持「角色名．暱稱」顯示） -->
   <script>
   ;(() => {
     "use strict";
-
-    // === 檔名 → 中文角色名（全部小寫 key） ===
     const roleMap = {
-      "kinbah.png": "金巴",
-      "mailah.png": "麥拉",
-      "khaupe.png": "考盃",
-      "holah.png": "赫拉",
-      "chinaikhun.png": "金．艾捆",
-      "chiaulaipeh.png": "郊．萊北",
-      "mienphapan.png": "綿葩．坂",
-      "hamchuniok.png": "罕族．拗"
+      "kinbah.png": "金巴","mailah.png": "麥拉","khaupe.png": "考盃","holah.png": "赫拉",
+      "chinaikhun.png": "金．艾捆","chiaulaipeh.png": "郊．萊北","mienphapan.png": "綿葩．坂","hamchuniok.png": "罕族．拗"
     };
-
-    // 可靠取檔名（去 query/hash，轉小寫）
-    function fileKey(path){
-      if (!path || typeof path !== "string") return "";
-      const clean = path.split("#")[0].split("?")[0];
-      const file  = clean.split("/").pop() || "";
-      return file.toLowerCase();
-    }
-
-    // 讀玩家 → {name, roleName, avatarPath}
+    const fileKey = (p)=> (String(p||'').split('#')[0].split('?')[0].split('/').pop()||'').toLowerCase();
     function readHero(){
-      let p = {};
-      try { p = JSON.parse(localStorage.getItem("bugSlayerPlayer") || "{}"); } catch {}
-      const name = p?.name || "無名勇者";
-      const avatarPath = p?.avatar || "";
-      const roleName = roleMap[fileKey(avatarPath)] || "未知勇者";
+      let p={}; try{ p=JSON.parse(localStorage.getItem("bugSlayerPlayer")||"{}"); }catch(_){}
+      const name=p?.name||"無名勇者", avatarPath=p?.avatar||"", roleName=roleMap[fileKey(avatarPath)]||"未知勇者";
       return { name, roleName, avatarPath };
     }
-
-    // 初始化勇者 UI
     function initHeroUI(){
       const { name, roleName, avatarPath } = readHero();
-
-      // 勇者名稱（角色中文名．暱稱）
       const elName = document.getElementById("playerName");
       if (elName) elName.textContent = `${roleName}．${name}`;
-
-      // 右下角貼圖（裝飾）
       let sticker = document.getElementById("heroSticker");
       if (!sticker) {
         sticker = document.createElement("img");
         sticker.id = "heroSticker";
         sticker.className = "hero-sticker";
-        sticker.alt = "";
-        sticker.setAttribute("aria-hidden", "true");
+        sticker.alt = ""; sticker.setAttribute("aria-hidden","true");
         document.body.appendChild(sticker);
       }
       sticker.style.display = avatarPath ? "" : "none";
       if (avatarPath) sticker.src = avatarPath;
     }
-
-    // 攔截 Core.updateUI，每次都維持顯示「角色中文名．暱稱」
     function patchUpdateUI(){
       if (!window.Core || typeof Core.updateUI !== "function") return false;
       if (Core.__patchedHeroName) return true;
-
       const orig = Core.updateUI.bind(Core);
       Core.updateUI = function(){
         orig();
@@ -236,125 +318,135 @@
         const elName = document.getElementById("playerName");
         if (elName) elName.textContent = `${roleName}．${name}`;
       };
-      Core.__patchedHeroName = true;
-      return true;
+      Core.__patchedHeroName = true; return true;
     }
-
-    // 確保 patch 成功（事件 + 輪詢）
     function ensurePatched(){
       if (patchUpdateUI()) return;
-      const t0 = Date.now();
-      const timer = setInterval(() => {
-        if (patchUpdateUI() || Date.now() - t0 > 5000) clearInterval(timer);
-      }, 120);
+      const t0=Date.now(), timer=setInterval(()=>{ if (patchUpdateUI() || Date.now()-t0>5000) clearInterval(timer); },120);
     }
-
     document.addEventListener("DOMContentLoaded", initHeroUI);
-    document.addEventListener("game-ready", () => {
-      initHeroUI();
-      ensurePatched();
-    }, { once:true });
+    document.addEventListener("game-ready", () => { initHeroUI(); ensurePatched(); }, { once:true });
     window.addEventListener("load", ensurePatched, { once:true });
   })();
   </script>
 
+  <!-- 等 TTS 完整後再生第一隻 -->
   <script>
   (function(){
-    // 遊戲就緒 → 先關門 → 等 TTS 完成 → 開門 & 生第一隻
     document.addEventListener('game-ready', async function(){
       try {
-        // 這時 announceLevelIntro() 已經開始講了；先把門關上，防止講完自動生怪
         window.__gateOpen = true;
-
-        // 等到 Core 的語音佔用清空（= 開場旁白唸完）
         while (window.Core && Core._speechDepth > 0) {
           await new Promise(r => setTimeout(r, 120));
         }
-
-        // 開門 & 放怪
         window.__gateOpen = false;
-        if (window.Core && typeof Core.spawnBug === 'function') {
-          Core.spawnBug();
-        }
+        if (window.Core && typeof Core.spawnBug === 'function') Core.spawnBug();
       } catch(_) {}
     }, { once: true });
   })();
   </script>
+
+  <!-- 模式切換（Shift+M） -->
   <script>
     Modes.applyModeOnLoad();
     Modes.bindQuickToggle();
-
-    // 若你有遊戲語音，模式切換時也可補一段說明：
-    document.addEventListener('keydown', (e)=>{
-      if (e.shiftKey && (e.key === 'M' || e.key === 'm')) {
-        // 這裡不用做別的，modes.js 會處理 TTS + aria 了
-      }
-    });
   </script>
+
+  <!-- 舞台手勢：單擊掃描、雙擊攻擊、滑動移動 -->
   <script>
-  /* SRNoiseGate v1 — 全域關/開 live region，避免 NVDA 搶話 */
+  (function(){
+    const area = document.getElementById('gameArea');
+    if (!area) return;
+
+    let t1 = 0, x1 = 0, y1 = 0;
+    let sx=0, sy=0;
+
+    area.addEventListener('touchstart', (e)=>{
+      const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY;
+    }, { passive: true });
+
+    area.addEventListener('touchend', (e)=>{
+      const now = Date.now();
+      const t = e.changedTouches[0];
+      const dx = t.clientX - sx, dy = t.clientY - sy;
+      const adx = Math.abs(dx), ady = Math.abs(dy);
+
+      const TAP_DIST = 16;
+      const DBL_MS   = 280;
+      const SWIPE    = 28;
+
+      // 滑動移動
+      if (adx > SWIPE || ady > SWIPE) {
+        if (adx > ady) { (dx > 0 ? window.moveRight : window.moveLeft)?.(); }
+        else           { (dy > 0 ? window.moveDown  : window.moveUp  )?.(); }
+        t1 = 0; return;
+      }
+
+      // 點擊（單擊掃描、雙擊攻擊）
+      if (!t1) {
+        t1 = now; x1 = t.clientX; y1 = t.clientY;
+        setTimeout(()=>{ if (t1 && (Date.now()-t1)>=DBL_MS) { t1=0; window.scanArea?.(); } }, DBL_MS+10);
+      } else {
+        const dt = now - t1;
+        const dd = Math.hypot(t.clientX - x1, t.clientY - y1);
+        if (dt <= DBL_MS && dd <= TAP_DIST) { t1 = 0; window.attack?.(); }
+        else {
+          t1 = now; x1 = t.clientX; y1 = t.clientY;
+          setTimeout(()=>{ if (t1 && (Date.now()-t1)>=DBL_MS) { t1=0; window.scanArea?.(); } }, DBL_MS+10);
+        }
+      }
+    }, { passive: true });
+  })();
+  </script>
+
+  <!-- 手機：武器浮動選單控制 -->
+  <script>
+  (function(){
+    const toggle = document.getElementById('weaponToggle');
+    const menu   = document.getElementById('weaponMenu');
+    if (!toggle || !menu) return;
+
+    let open = false;
+    const show = ()=>{ menu.style.display='flex'; toggle.setAttribute('aria-expanded','true'); open=true; };
+    const hide = ()=>{ menu.style.display='none';  toggle.setAttribute('aria-expanded','false'); open=false; };
+    const toggleMenu = ()=>{ open ? hide() : show(); };
+
+    toggle.addEventListener('click', (e)=>{ e.stopPropagation(); toggleMenu(); });
+
+    // 點外面自動收起
+    document.addEventListener('click', (e)=>{
+      if (open && !menu.contains(e.target) && e.target!==toggle){ hide(); }
+    });
+
+    // 點子按鈕 → 換武器
+    menu.addEventListener('click',(e)=>{
+      const btn=e.target.closest('button[data-wpn]');
+      if(!btn || btn.disabled) return;
+      window.changeWeapon?.(btn.dataset.wpn);
+      hide();
+    });
+
+    // 第一關啟用 1~3
+    ['fire','spray','slipper'].forEach(id=>{
+      menu.querySelector(`button[data-wpn="${id}"]`)?.removeAttribute('disabled');
+    });
+  })();
+  </script>
+
+  <!-- SR live region 噪音門 -->
+  <script>
   (function (w) {
     'use strict';
-    // 你要「管控」的 live 元素（可視需求加）
-    const LIVE_SELECTORS = [
-      '#srStatus',  // 我們的狀態播報
-      '#message',   // 大多數關卡用來顯示提示/警示
-      '[role="status"][aria-live]',
-      '[aria-live="polite"]',
-      '[aria-live="assertive"]'
-    ];
-
-    // 取 DOM + 去重
-    function getLiveNodes() {
-      const set = new Set();
-      LIVE_SELECTORS.forEach(sel => {
-        document.querySelectorAll(sel).forEach(n => set.add(n));
-      });
-      return Array.from(set);
-    }
-
-    // 記住原本 aria-live，之後恢復
+    const LIVE_SELECTORS = ['#srStatus','#message','[role="status"][aria-live]','[aria-live="polite"]','[aria-live="assertive"]'];
+    const getLiveNodes = () => { const set=new Set(); LIVE_SELECTORS.forEach(sel=>{ document.querySelectorAll(sel).forEach(n=>set.add(n)); }); return Array.from(set); };
     const original = new WeakMap();
-    function muteLiveRegions() {
-      getLiveNodes().forEach(n => {
-        if (!original.has(n)) original.set(n, n.getAttribute('aria-live') || '');
-        n.setAttribute('aria-live', 'off');
-      });
-      // 告訴 AT：頁面暫時忙，別念變更（輔助旗標）
-      document.body.setAttribute('aria-busy', 'true');
-    }
-    function unmuteLiveRegions() {
-      getLiveNodes().forEach(n => {
-        const v = original.get(n);
-        if (v === null || v === '') n.removeAttribute('aria-live');
-        else n.setAttribute('aria-live', v);
-      });
-      document.body.removeAttribute('aria-busy');
-    }
-
-    // 判斷 TTS 是否忙碌（Core 或瀏覽器 TTS 其一）
-    function ttsBusy() {
-      const coreBusy  = !!(w.Core && typeof Core._speechDepth === 'number' && Core._speechDepth > 0);
-      const synthBusy = !!(w.speechSynthesis && speechSynthesis.speaking);
-      return coreBusy || synthBusy;
-    }
-
-    // 監聽器：定期查看狀態轉變，只在「忙碌→空閒」「空閒→忙碌」時切換
-    (function startWatcher() {
-      let muted = false;
-      setInterval(() => {
-        const busy = ttsBusy();
-        if (busy && !muted) { muteLiveRegions(); muted = true; }
-        else if (!busy && muted) { unmuteLiveRegions(); muted = false; }
-      }, 120);
-    })();
-
-    // 若有 Quiz open/close 事件也一併掛上，進一步靜音
-    w.addEventListener?.('quiz-open',  muteLiveRegions);
-    w.addEventListener?.('quiz-close', unmuteLiveRegions);
-
-    // 退出頁面時清理
-    w.addEventListener?.('beforeunload', unmuteLiveRegions);
+    function mute(){ getLiveNodes().forEach(n=>{ if(!original.has(n)) original.set(n, n.getAttribute('aria-live')||''); n.setAttribute('aria-live','off'); }); document.body.setAttribute('aria-busy','true'); }
+    function unmute(){ getLiveNodes().forEach(n=>{ const v=original.get(n); if(v===null||v==='') n.removeAttribute('aria-live'); else n.setAttribute('aria-live',v); }); document.body.removeAttribute('aria-busy'); }
+    const busy = ()=> !!(w.Core && typeof Core._speechDepth==='number' && Core._speechDepth>0) || !!(w.speechSynthesis && speechSynthesis.speaking);
+    (function watch(){ let m=false; setInterval(()=>{ const b=busy(); if(b && !m){ mute(); m=true; } else if(!b && m){ unmute(); m=false; } }, 120); })();
+    w.addEventListener?.('quiz-open',  mute);
+    w.addEventListener?.('quiz-close', unmute);
+    w.addEventListener?.('beforeunload', unmute);
   })(window);
   </script>
 </body>

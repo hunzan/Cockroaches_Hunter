@@ -1,84 +1,157 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
   <title>第五關介紹 - 廚房飯廳</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
   <script src="js/core/audio-unlocker.js"></script>
   <style>
-    body { opacity: 0; transition: opacity .6s ease; }
-    body.ready { opacity: 1; }
-    .wrap { max-width: 900px; margin: 0 auto; }
-    section { margin: 1rem 0; padding: .75rem 1rem; border-radius: 12px; background: rgba(0,0,0,.35); }
-    h1,h2 { text-align:center; }
-    .bug { display: flex; gap: 1rem; align-items: center; margin: .75rem 0; }
-    .bug img { width: 100%; max-width: 280px; height: auto; display: block; margin: 0 auto; border-radius: 12px; }
-    @media (min-width: 768px) { .bug img { max-width: 320px; } }
-    @media (min-width: 1200px) { .bug img { max-width: 400px; } }
-    .kbd { display:inline-block; padding:.1rem .4rem; border:1px solid #aaa; border-radius:6px; background:#fff; color:#000; font-family:monospace; font-size:.9rem; }
-    #startBtn { margin-top: 1.2rem; font-size: 1.1rem; padding: .5rem 1.25rem; display:block; margin-left:auto; margin-right:auto; }
-
-    /* 視覺隱藏（僅讀屏） */
-    .sr-only {
-      position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
-      overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0;
+    :root{
+      --overlay: rgba(0,0,0,.38);
+      --glass: rgba(255,255,255,.08);
+      --bd: rgba(255,255,255,.18);
+      --accent: #ffd166;
+      --safe-bottom: env(safe-area-inset-bottom);
     }
 
-    /* Skip link：預設隱藏，聚焦才顯示 */
-    .skip-link {
-      position: absolute; left: -9999px; top: 0;
-      background: #ffd452; color: #111; padding: .5rem .75rem; border-radius: 8px;
-      text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,.3);
+    /* 背景與淡入 */
+    body{
+      margin:0; color:#fff;
+      background:#000 url("assets/images/game_bg5.png") center/cover no-repeat fixed;
+      opacity:0; transition:opacity .45s ease;
+      -webkit-tap-highlight-color: transparent;
     }
-    .skip-link:focus, .skip-link:focus-visible { left: 12px; top: 12px; z-index: 1000; outline: 2px solid #222; }
+    body.ready{ opacity:1; }
 
-    /* 焦點可見（給鍵盤使用者） */
-    [tabindex="-1"]:focus, section:focus, #startBtn:focus { outline: 3px solid #ffd452; outline-offset: 2px; }
+    /* 版心與卡片 */
+    .wrap{ max-width:980px; margin:0 auto; padding:clamp(.8rem,2.8vw,1.25rem); }
+    section{
+      margin:clamp(.75rem,2.2vw,1.2rem) 0;
+      padding:clamp(.75rem,2.5vw,1.15rem);
+      border-radius:16px;
+      background:var(--overlay);
+      border:1px solid rgba(255,255,255,.16);
+      backdrop-filter: blur(4px);
+      box-shadow:0 8px 26px rgba(0,0,0,.35);
+    }
+    h1{ text-align:center; margin:.25rem 0 1rem; }
+    h2{ text-align:center; margin:.2rem 0 .6rem; }
+
+    /* 鍵帽樣式（觸控更大） */
+    .kbd{
+      display:inline-block; padding:.18rem .48rem;
+      border:1px solid #aaa; border-radius:8px;
+      background:#fff; color:#111;
+      font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+      font-size:.95rem;
+    }
+    @media (max-width:640px){ .kbd{ padding:.28rem .58rem; border-width:2px; font-size:1rem; } }
+
+    /* 蟑螂卡片 RWD */
+    .bug{ display:grid; grid-template-columns:1fr; gap:12px; align-items:center; }
+    @media (min-width:760px){
+      .bug{ grid-template-columns:320px 1fr; gap:18px; }
+    }
+    .bug img{
+      width:100%; height:auto; display:block;
+      border-radius:14px; background:var(--glass);
+      border:1px solid var(--bd); padding:.25rem;
+    }
+
+    /* 主要行動按鈕（桌機置中；手機 sticky） */
+    .cta-wrap{ text-align:center; margin-top:1.2rem; }
+    #startBtn{
+      appearance:none; border:0; cursor:pointer;
+      font-weight:900; letter-spacing:.02em;
+      font-size:clamp(1.05rem,2.8vw,1.2rem);
+      padding:.75rem 1.4rem; border-radius:999px;
+      background:var(--accent); color:#222;
+      transition:transform .08s ease, box-shadow .12s ease;
+      box-shadow:0 8px 20px rgba(0,0,0,.35);
+      touch-action: manipulation;
+    }
+    #startBtn:active{ transform:translateY(1px); }
+
+    @media (max-width:760px){
+      .cta-fixed{
+        position:sticky; bottom:0; z-index:50;
+        padding:.6rem .8rem calc(.6rem + var(--safe-bottom));
+        background:linear-gradient(180deg, transparent 0%, rgba(0,0,0,.55) 45%, rgba(0,0,0,.75) 100%);
+        margin:0 -1rem;
+      }
+      .cta-fixed #startBtn{ width:100%; }
+    }
+
+    /* Skip links */
+    .skip-link{
+      position:fixed; left:12px; top:10px;
+      transform:translateY(-150%);
+      background:#000; color:#fff;
+      padding:.5rem .75rem; border-radius:10px;
+      border:2px solid var(--accent);
+      box-shadow:0 4px 18px rgba(0,0,0,.45);
+      z-index:10000;
+      transition:transform .18s ease, box-shadow .18s ease;
+    }
+    .skip-link:focus, .skip-link:focus-visible{
+      transform:translateY(0); outline:none;
+      box-shadow:0 6px 24px rgba(0,0,0,.6);
+    }
+
+    /* 焦點可見 */
+    [tabindex="-1"]:focus, section:focus, #startBtn:focus{
+      outline:3px solid var(--accent); outline-offset:2px;
+    }
+
+    /* 視覺隱藏（SR） */
+    .sr-only{
+      position:absolute!important; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,1px,1px); white-space:nowrap; border:0;
+    }
   </style>
 </head>
 <body class="level-intro">
-<!-- 隱藏的跳轉連結們（聚焦時顯示） -->
-<a href="#main" class="skip-link" id="skipToMain"
-   aria-label="跳到主內容，直接開始聽本關說明">跳到主內容</a>
-
-<a href="#startBtn" class="skip-link" style="top:56px" id="skipToStart"
-   aria-label="跳到開始按鈕，直接進入遊戲">跳到開始按鈕</a>
+  <!-- 隱藏的跳轉連結（聚焦才顯示） -->
+  <a href="#main" class="skip-link" id="skipToMain" aria-label="跳到主內容，開始聽本關說明">跳到主內容</a>
+  <a href="#startBtn" class="skip-link" style="top:56px" id="skipToStart" aria-label="跳到開始按鈕，直接進入遊戲">跳到開始按鈕</a>
 
   <main class="wrap" id="main" tabindex="-1" aria-label="第五關介紹主內容">
     <h1>第 5 關：廚房飯廳</h1>
-    <!-- 第一區塊：可程序聚焦 -->
+
+    <!-- A11Y 區塊 -->
     <section id="a11yBlock" aria-labelledby="a11yTitle" tabindex="-1">
-    <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
-    <p>
-      使用 <strong>NVDA</strong> 或其他螢幕報讀時，進入關卡後請先按
-      <span class="kbd">NVDA</span> + <span class="kbd">空白</span>
-      切換到<strong>焦點模式</strong>，再使用方向鍵操作。
-    </p>
-    <ul>
-      <li>方向鍵：<span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> </li>
-      <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
-      <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖、<span class="kbd">4</span> 毒餌</li>
-      <li>攻擊：<span class="kbd">Enter</span></li>
-      <li>若方向鍵無效，請再次按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 進入焦點模式</li>
-    </ul>
-  </section>
+      <h2 id="a11yTitle">螢幕報讀使用者必看</h2>
+      <p>
+        進入關卡後，請先按 <span class="kbd">NVDA</span> + <span class="kbd">空白</span> 切到<strong>焦點模式</strong>，再用方向鍵操作。
+      </p>
+      <ul>
+        <li>方向鍵：<span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span></li>
+        <li>定位輔助：<span class="kbd">空白鍵</span> 掃描蟑螂位置</li>
+        <li>武器：<span class="kbd">1</span> 噴火槍、<span class="kbd">2</span> 香氛噴霧、<span class="kbd">3</span> 藍白拖、<span class="kbd">4</span> 毒餌</li>
+        <li>Boss 關新增：<span class="kbd">5</span> 養貓、<span class="kbd">6</span> 罷免連署、<span class="kbd">7</span> 發動罷免</li>
+        <li>若方向鍵沒反應，請再按一次 <span class="kbd">NVDA</span> + <span class="kbd">空白</span></li>
+      </ul>
+    </section>
+
     <!-- 場地形式 -->
     <section>
       <h2>場地形式</h2>
-      <p>10 × 10 格正方形地圖，可上下左右移動。</p>
+      <p>10 × 10 正方形地圖，可上下左右移動。</p>
     </section>
 
     <!-- 家具/障礙與移動物件 -->
     <section>
       <h2>家具區與移動障礙</h2>
       <ul>
-        <li>餐桌椅區：<strong>4×2</strong>，位於
-          <strong>第 5–6 行 × 第 4–7 列</strong>（中央偏左）。
-          所有家具皆為障礙，⚠️不可穿越。
-          第一次撞到會語音提醒；同區域第二次硬撞會<strong>扣 1 血、扣 1 金幣</strong>。
+        <li>
+          餐桌椅區：<strong>4 × 2</strong>，位於<strong>第 5–6 行 × 第 4–7 列</strong>（中央偏左）。
+          傢具為障礙，<u>不可穿越</u>。第一次撞到會語音提醒；同區域第二次硬撞會<strong>扣 1 血、扣 1 金幣</strong>。
         </li>
-        <li>活動菜籃車：為<strong>移動障礙</strong>，在<strong>第 4 列</strong>沿水平方向來回移動（左右穿梭）。經過時所在格⚠️不能進入，請避開。</li>
+        <li>
+          活動菜籃車：<strong>移動障礙</strong>，在<strong>第 4 列</strong>左右來回。車子所在格當拍不可進入，發生碰撞會受傷並可能被推移一格。
+        </li>
       </ul>
     </section>
 
@@ -86,89 +159,125 @@
     <section>
       <h2>本關會遇到的新蟑螂 🪳</h2>
       <article class="bug" aria-label="夭壽強">
-        <img src="assets/images/cockroaches/k5.png" alt="至尊蟑螂王夭壽強，巨大蟑螂王直立如人，張嘴露出獠牙，一副獨裁者的架勢，拿著雞腿指揮蟑螂族們。">
+        <img src="assets/images/cockroaches/k5.png" alt="至尊蟑螂王夭壽強，巨大直立，張嘴露出獠牙，指揮蟑螂族群。">
         <div>
-          <h3>夭壽強（至尊王者）</h3>
-          <p>蟑螂族票選出來的蟑螂王，具蟑螂民意基礎，常規武器無效，叫聲是「夭壽喔」。</p>
-          <p>傳說可用「發動罷免 👎️」或「召喚貓咪 🐈」瓦解其勢力。</p>
+          <h3 style="margin:.25rem 0 .35rem">夭壽強（至尊王者）</h3>
+          <p>蟑螂族票選的蟑螂王，常規武器無效。傳說可用「發動罷免 👎」或「召喚貓咪 🐈」擊倒。</p>
         </div>
       </article>
     </section>
 
-    <!-- 操作提示（延續前關邏輯，可留可省） -->
+    <!-- 操作方式 -->
     <section>
       <h2>操作方式</h2>
       <ul>
         <li>按 <span class="kbd">↑</span> <span class="kbd">↓</span> <span class="kbd">←</span> <span class="kbd">→</span> 移動；按 <span class="kbd">空白鍵</span> 掃描蟑螂位置。</li>
         <li>按 <span class="kbd">1</span> <span class="kbd">2</span> <span class="kbd">3</span> <span class="kbd">4</span> 選武器（噴火槍、香氛噴霧、藍白拖、毒餌）。</li>
-        <li>本關新增特別武器：<span class="kbd">6</span> 罷免連署、<span class="kbd">7</span> 罷免、<span class="kbd">5</span> 養貓（衡量財力）。</li>
-        <li>對準位置後按 <span class="kbd">Enter</span> 執行。</li>
+        <li>Boss 關特別武器：<span class="kbd">6</span> 罷免連署、<span class="kbd">7</span> 罷免、<span class="kbd">5</span> 養貓（需金幣充足）。</li>
+        <li>對準目標後按 <span class="kbd">Enter</span> 執行。</li>
       </ul>
     </section>
 
     <!-- 特別規則 -->
     <section class="notice" role="note">
-      <h2>特別規則 💰</h2>
-      <p>可用金幣罷免連署收編 <strong>俗辣強／飛天強尼／主管強強棍</strong>（各需 <strong>1、3、5</strong> 枚）；<strong>軍師蟑到爆</strong>無法收買，需靠智慧解題；罷免連署累積達門檻可<strong>罷免夭壽強</strong>。</p>
-      <p>若金幣超過 200 枚，可購入貓飼料養貓成為武器，需要時可召喚戰貓攻擊蟑螂王。</p>
+      <h2>特別規則 💰 / 👎 / 🐈</h2>
+      <ul>
+        <li>可用金幣對 <strong>K1/K2/K3</strong> 進行<strong>罷免連署</strong>以換取選票（價格與票值依各蟑螂而定）。</li>
+        <li><strong>軍師蟑到爆（K4）</strong>無法收買，需靠解題收服。</li>
+        <li>當連署達門檻（K1：20、K2：10、K3：5）即可對蟑螂王使用<strong>發動罷免（7）</strong>一擊致勝。</li>
+        <li>金幣 ≥ 200 可<strong>養貓（5）</strong>，之後可召喚戰貓對王造成固定傷害（可多次使用）。</li>
+      </ul>
     </section>
 
     <!-- 破關目標 -->
     <section id="goalSection" tabindex="-1" aria-labelledby="goalTitle">
       <h2 id="goalTitle">破關目標 🎯</h2>
-      <p>俗辣強 20 隻、飛天強尼 10 隻、主管強強棍 5 隻、軍師蟑到爆 3 隻，完成對蟑螂王夭壽強的終局條件。</p>
+      <p>俗辣強 20 隻、飛天強尼 10 隻、主管強強棍 5 隻、軍師蟑到爆 3 隻，並完成對蟑螂王夭壽強的終局條件。</p>
     </section>
-    <!-- 讀屏提示（live） -->
-    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
 
-    <!-- 結尾哨兵：Tab 到此會自動送焦點到開始按鈕 -->
+    <!-- SR 提示與哨兵 -->
+    <div id="srHint" class="sr-only" role="status" aria-live="polite"></div>
     <div id="endSentinel" class="sr-only" tabindex="0" aria-label="已到說明結尾，將前往開始按鈕"></div>
 
-    <button id="startBtn">進入第五關</button>
+    <!-- CTA -->
+    <div class="cta-wrap cta-fixed">
+      <button id="startBtn" aria-describedby="startDesc">進入第五關</button>
+      <span id="startDesc" class="sr-only">按下將前往第五關遊戲。</span>
+    </div>
   </main>
 
-  <style>
-    body { background: #000 url("assets/images/game_bg5.png") center/cover no-repeat fixed; }
-  </style>
+  <!-- BGM -->
   <audio id="bgm" src="assets/sounds/game_05.mp3" loop preload="auto" autoplay muted playsinline></audio>
 
   <script>
-    // 統一交給 AudioFX
+    /* ==== 音訊初始化與解鎖（行動裝置） ==== */
     AudioFX.init();
-    AudioFX.register(document.getElementById('bgm'));
+    const bgm = document.getElementById('bgm');
+    AudioFX.register(bgm);
 
-    // 若使用者之前已互動過（同分頁流程/上一頁已解鎖），這裡會自動恢復播放
-    AudioFX.ensure();
+    (function(){
+      let armed = false;
+      function fadeIn(audio, vol=0.6, ms=900){
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { audio.volume = vol; return; }
+        audio.volume = 0;
+        const steps = 18, delta = vol/steps, step = Math.ceil(ms/steps);
+        let i = 0; const t = setInterval(()=>{ i++; audio.volume = Math.min(vol, audio.volume + delta); if(i>=steps) clearInterval(t); }, step);
+      }
+      function arm(){
+        if (armed) return; armed = true;
+        try { AudioFX.ensure(); } catch(_){}
+        try { bgm.muted = false; } catch(_){}
+        bgm.play().then(()=> fadeIn(bgm, .55, 900)).catch(()=>{ /* 自動播放被擋就保持靜音 */ });
+        document.removeEventListener('pointerdown', arm, true);
+        document.removeEventListener('keydown', arm, true);
+      }
+      document.addEventListener('pointerdown', arm, true);
+      document.addEventListener('keydown', arm, true);
+    })();
   </script>
 
   <script>
-    // 入關導向（並留旗標給 game_05.html 做自動聚焦/提示）
-    function goLevel5() {
-      try { sessionStorage.setItem('needFocusModeHint', '5'); } catch (_) {}
+    /* ==== 導頁 ==== */
+    function goLevel5(){
+      try { sessionStorage.setItem('needFocusModeHint', '5'); } catch(_){}
       location.href = 'game_05.html';
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      // 視覺淡入
+    /* ==== 可及性與導覽 ==== */
+    document.addEventListener('DOMContentLoaded', ()=>{
       document.body.classList.add('ready');
 
-      // NVDA 提示（用 aria-live，不靠瀏覽器 TTS）
       const srHint = document.getElementById('srHint');
-      if (srHint) {
-        srHint.textContent =
-          '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。若方向鍵無反應，請再按一次。';
-      }
+      const firstBlock = document.getElementById('a11yBlock');
+      const skipMain = document.getElementById('skipToMain');
+      const skipStart = document.getElementById('skipToStart');
+      const startBtn  = document.getElementById('startBtn');
+      const endSentinel = document.getElementById('endSentinel');
 
-      // 聚焦「進入第五關」按鈕 + 綁事件
-      const startBtn = document.getElementById('startBtn');
-      if (startBtn) {
-        startBtn.addEventListener('click', goLevel5);
-        startBtn.focus({ preventScroll: true });
-      }
+      // 初次進頁：聚焦第一區塊
+      firstBlock?.focus({ preventScroll:true });
+      srHint.textContent = '提示：進入關卡後，請按 NVDA 加 空白 切換到焦點模式，再用方向鍵操作。';
 
-      // Enter 也可直接開始（避免使用者還要移動焦點）
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') { e.preventDefault(); goLevel5(); }
+      // Skip → 主內容
+      function focusFirst(e){ e?.preventDefault(); firstBlock?.focus(); }
+      skipMain.addEventListener('click', focusFirst);
+      skipMain.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' ') focusFirst(e); });
+
+      // Skip → 開始按鈕
+      function focusStart(e){ e?.preventDefault(); startBtn?.focus(); }
+      skipStart.addEventListener('click', focusStart);
+      skipStart.addEventListener('keydown', e=>{ if (e.key==='Enter'||e.key===' ') focusStart(e); });
+
+      // 內容尾端 → 自動把焦點送到開始按鈕
+      endSentinel.addEventListener('focus', ()=>{
+        srHint.textContent = '已到說明結尾，前往開始按鈕。';
+        setTimeout(()=> startBtn?.focus(), 0);
+      });
+
+      // 只在按鈕聚焦時，Enter/Space 才會啟動
+      startBtn.addEventListener('click', goLevel5);
+      startBtn.addEventListener('keydown', (e)=>{
+        if (e.key==='Enter' || e.key===' '){ e.preventDefault(); goLevel5(); }
       });
     });
   </script>

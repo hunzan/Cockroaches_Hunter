@@ -3,160 +3,80 @@
 <head>
   <meta charset="UTF-8" />
   <title>選擇你的獵人角色 - 進擊的蟑螂</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <link rel="stylesheet" href="style.css" />
+
+  <!-- 全域工具（維持傳統 script）：提供 Modes 與 RolesVoice 兩個全域物件 -->
   <script src="js/core/modes.js"></script>
   <script src="js/core/roles-voice.js"></script>
-<style>
-  :root {
-    --card-bg: rgba(0,0,0,0.45);
-    --card-bd: rgba(255,255,255,0.2);
-    --accent: #ffd166;
-  }
-  body {
-    margin: 0;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: url("assets/images/select_bg.png") no-repeat center center/cover;
-    color: #fff;
-    text-shadow: 1px 1px 2px #000;
-  }
-  main {
-    width: min(980px, 92vw);
-    padding: 1.5rem;
-    background: rgba(0,0,0,0.35);
-    border: 1px solid rgba(255,255,255,0.15);
-    border-radius: 16px;
-    backdrop-filter: blur(4px);
-    opacity: 0; animation: fadeIn .9s forwards;
-  }
-  @keyframes fadeIn { to { opacity: 1; } }
-  h1 { margin: 0 0 0.25rem }
-  p.lead { margin: 0 0 1rem; opacity: .9 }
-  form { margin-top: 1rem; }
 
-  .name-row {
-    display: grid;
-    grid-template-columns: 110px 1fr;
-    gap: .75rem;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  .name-row input[type="text"]{
-    padding: .6rem .8rem;
-    font-size: 1.05rem;
-    border-radius: 10px;
-    border: 1px solid var(--card-bd);
-    background: rgba(0,0,0,0.3);
-    color: #fff;
-    outline: none;
-  }
-  .name-row input[type="text"]:focus{
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255,209,102,.25);
-  }
+  <style>
+    :root { --card-bg: rgba(0,0,0,0.45); --card-bd: rgba(255,255,255,0.2); --accent: #ffd166; }
+    body {
+      margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+      background: url("assets/images/select_bg.png") no-repeat center center/cover;
+      color: #fff; text-shadow: 1px 1px 2px #000;
+    }
+    main {
+      width: min(980px, 92vw); padding: 1.5rem; background: rgba(0,0,0,0.35);
+      border: 1px solid rgba(255,255,255,0.15); border-radius: 16px; backdrop-filter: blur(4px);
+      opacity: 0; animation: fadeIn .9s forwards;
+    }
+    @keyframes fadeIn { to { opacity: 1; } }
+    h1 { margin: 0 0 0.25rem } p.lead { margin: 0 0 1rem; opacity: .9 } form { margin-top: 1rem; }
 
-  .grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: .9rem;
-    align-items: stretch;
-  }
-  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
-  @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
+    .name-row { display: grid; grid-template-columns: 110px 1fr; gap: .75rem; align-items: center; margin-bottom: 1rem; }
+    .name-row input[type="text"]{
+      padding: .6rem .8rem; font-size: 1.05rem; border-radius: 10px; border: 1px solid var(--card-bd);
+      background: rgba(0,0,0,0.3); color: #fff; outline: none;
+    }
+    .name-row input[type="text"]:focus{ border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,209,102,.25); }
 
-  .hunter-input { position: absolute; opacity: 0; pointer-events: none; }
+    .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: .9rem; align-items: stretch; }
+    @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .grid { grid-template-columns: 1fr; } }
 
-  .card {
-    position: relative;              /* 勾勾定位用、確保層級 */
-    cursor: pointer;
-    border-radius: 14px;
-    border: 2px solid var(--card-bd);
-    background: var(--card-bg);
-    padding: .9rem .9rem 1rem;
-    text-align: center;
-    transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    min-height: 260px;
-    overflow: visible;               /* 讓放大圖可溢出 */
-  }
-  .card:hover .img-wrap img { transform: scale(1.05); }
+    .hunter-input { position: absolute; opacity: 0; pointer-events: none; }
 
-  .card:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
+    .card {
+      position: relative; cursor: pointer; border-radius: 14px; border: 2px solid var(--card-bd);
+      background: var(--card-bg); padding: .9rem .9rem 1rem; text-align: center;
+      transition: transform .15s ease, border-color .15s ease, box-shadow .15s ease;
+      display: grid; grid-template-rows: auto 1fr auto; min-height: 260px; overflow: visible;
+    }
+    .card:hover .img-wrap img { transform: scale(1.05); }
+    .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-  .card .img-wrap {
-    height: 160px;
-    display: grid;
-    place-items: center;
-    border-radius: 10px;
-    background: rgba(255,255,255,.08);
-    margin: .25rem 0 .6rem;
-    overflow: visible;               /* 允許放大超出 */
-  }
-  .card img {
-    max-height: 150px; width: auto; height: auto;
-    max-width: 100%;
-    object-fit: contain;
-    display: block;
-    transform-origin: center bottom; /* 放大更自然 */
-    transition: transform .25s ease; /* 統一過渡 */
-    will-change: transform;          /* 提升流暢度 */
-  }
+    .card .img-wrap {
+      height: 160px; display: grid; place-items: center; border-radius: 10px; background: rgba(255,255,255,.08);
+      margin: .25rem 0 .6rem; overflow: visible;
+    }
+    .card img {
+      max-height: 150px; width: auto; height: auto; max-width: 100%; object-fit: contain; display: block;
+      transform-origin: center bottom; transition: transform .25s ease; will-change: transform;
+    }
+    .hunter-input:checked + .card .img-wrap img { transform: scale(1.3); z-index: 2; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.55)); }
 
-  /* ✅ 已選角色卡片 → 放大角色圖（唯一生效規則）*/
-  .hunter-input:checked + .card .img-wrap img {
-    transform: scale(1.3);
-    z-index: 2;
-    filter: drop-shadow(0 6px 12px rgba(0,0,0,0.55));
-  }
+    .card .hn { font-weight: 700; margin: 0 0 .2rem; }
+    .card .roman { opacity: .9; font-size: .95rem; }
 
-  .card .hn { font-weight: 700; margin: 0 0 .2rem; }
-  .card .roman { opacity: .9; font-size: .95rem; }
+    .hunter-input:checked + .card { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(255,209,102,.25); }
+    .hunter-input:checked + .card::after{
+      content: "✓"; position: absolute; right: 10px; top: 8px; background: var(--accent);
+      color: #222; font-weight: 900; border-radius: 999px; width: 22px; height: 22px; display: grid; place-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,.35); z-index: 3;
+    }
 
-  .hunter-input:checked + .card {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(255,209,102,.25);
-  }
+    .actions { margin-top: 1.25rem; display: flex; gap: .75rem; align-items: center; flex-wrap: wrap; }
+    .btn { appearance: none; border: none; border-radius: 999px; padding: .7rem 1.2rem; font-size: 1.05rem;
+      background: var(--accent); color: #222; cursor: pointer; font-weight: 700; transition: transform .08s ease; }
+    .btn:active { transform: translateY(1px); }
 
-  /* 勾勾標記 */
-  .hunter-input:checked + .card::after{
-    content: "✓";
-    position: absolute;
-    right: 10px; top: 8px;
-    background: var(--accent);
-    color: #222; font-weight: 900;
-    border-radius: 999px; width: 22px; height: 22px;
-    display: grid; place-items: center;
-    box-shadow: 0 2px 6px rgba(0,0,0,.35);
-    z-index: 3;                      /* 高於放大圖 */
-  }
+    #status { min-height: 1.2em; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000; }
 
-  .actions {
-    margin-top: 1.25rem;
-    display: flex; gap: .75rem; align-items: center; flex-wrap: wrap;
-  }
-  .btn {
-    appearance: none; border: none; border-radius: 999px;
-    padding: .7rem 1.2rem; font-size: 1.05rem;
-    background: var(--accent); color: #222; cursor: pointer; font-weight: 700;
-    transition: transform .08s ease;
-  }
-  .btn:active { transform: translateY(1px); }
-
-  #status { min-height: 1.2em; font-weight: 700; color: #fff; text-shadow: 0 1px 2px #000; }
-
-  /* 視覺上隱藏、給螢幕報讀用 */
-  .sr-only {
-    position: absolute !important;
-    width: 1px; height: 1px; padding: 0; margin: -1px;
-    overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-  }
-</style>
+    .sr-only { position: absolute !important; width: 1px; height: 1px; padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+  </style>
 </head>
 <body>
   <main>
@@ -168,15 +88,13 @@
         <label for="playerName">暱稱：</label>
         <input id="playerName" name="playerName" type="text" placeholder="輸入你的稱號…" required maxlength="20" />
       </div>
-            <!-- select_player.html 裡的表單內，加一段 -->
+
       <div class="mode-row">
         <fieldset aria-describedby="modeHint">
           <legend>體驗模式</legend>
           <label><input type="radio" name="mode" value="visual" checked> 顯示遊戲畫面模式</label>
           <label style="margin-left:12px;"><input type="radio" name="mode" value="audio">　遮蔽遊戲畫面（聽覺模式）</label>
-            <p id="modeHint" class="hint">
-              ※ 遊戲進行中可按 <kbd>Shift</kbd> + <kbd>M</kbd> 切換模式。
-            </p>
+          <p id="modeHint" class="hint">※ 遊戲進行中可按 <kbd>Shift</kbd> + <kbd>M</kbd> 切換模式。</p>
         </fieldset>
       </div>
 
@@ -283,17 +201,17 @@
   </main>
 
   <!-- 與首頁相同音樂 -->
-  <audio id="bgm" src="assets/sounds/start_theme.mp3" loop></audio>
+  <audio id="bgm" src="assets/sounds/start_theme.mp3" loop playsinline preload="auto"></audio>
 
-  <script src="js/core/roles-voice.js"></script>
-
-  <script>
-    // 先套用模式（支援 ?mode=audio 覆蓋）
-    Modes.applyModeOnLoad();
-
+  <!-- ✅ 單一入口：用 ES Module 寫頁面邏輯 -->
+  <script type="module">
+    // Modes / RolesVoice 來自上面的傳統 script（全域物件）
     const bgm = document.getElementById("bgm");
     const statusEl = document.getElementById("status");
     const srName = document.getElementById("srName");
+
+    // 先套用模式（支援 ?mode=audio 覆蓋）
+    window.Modes?.applyModeOnLoad();
 
     // === 音訊啟動（BGM + 角色語音播放器）===
     let audioArmed = false;
@@ -301,97 +219,79 @@
       if (audioArmed) return;
       audioArmed = true;
       bgm?.play()?.catch(()=>{});
-      // 也 prime 一下 roles-voice 內建 audio
-      try { RolesVoice.init({ selector: '.card', hover: false, focus: false, autoPrime: true }); } catch(_) {}
+      try {
+        window.RolesVoice?.init({ selector: '.card', hover: false, focus: false, autoPrime: true });
+      } catch(_) {}
     }
     document.addEventListener("click", armAudio, { once: true });
     document.addEventListener("keydown", armAudio, { once: true });
     document.addEventListener("touchstart", armAudio, { once: true, passive: true });
 
-    // === 建立「角色中文名 → MP3」對照（依 radio value 推檔名）===
+    // === 建立「角色中文名 → MP3」對照 ===
     function buildRoleVoicesMap() {
       const radios = document.querySelectorAll('input[name="hunter"]');
       const map = {};
       radios.forEach(r => {
         const displayName = (r.dataset.name || '').trim() || r.value;
-        const slug = String(r.value).replace(/\.png$/i, ''); // e.g. kinbah
-        // 檔案命名：assets/sounds/hunters/{slug}_select.mp3
+        const slug = String(r.value).replace(/\.png$/i, '');
         map[displayName] = `assets/sounds/hunters/${slug}_select.mp3`;
       });
       return map;
     }
-    // 確認 RolesVoice 已載入
-    try { RolesVoice.setVoices(buildRoleVoicesMap()); } catch(_) {}
+    try { window.RolesVoice?.setVoices(buildRoleVoicesMap()); } catch(_) {}
 
-    // === 綁定選角（鍵盤/滑鼠皆可）===
+    // === 選角語音與可及性標示 ===
     function bindHunterVoice() {
       const radios = document.querySelectorAll('input[name="hunter"]');
-
       const playByRadio = (r) => {
         const name = (r.dataset.name || '').trim() || r.value;
         if (statusEl) statusEl.textContent = `已選擇：${name}`;
         if (srName) srName.textContent = `已選擇 ${name}`;
-
-        // 更新 aria-selected（只有被選中的 .card 是 true）
-        document.querySelectorAll('.grid .card[role="option"]').forEach(c => {
-          c.setAttribute('aria-selected', 'false');
-        });
-        r.nextElementSibling?.setAttribute('aria-selected', 'true');
-
-        // 播你錄音；若缺檔就不要 TTS（若要開啟 fallback，把 '' 改成 name）
-        try { RolesVoice.play(name, { fallbackTTSText: '' }); } catch(_) {}
+        document.querySelectorAll('.grid .card[role="option"]').forEach(c => c.setAttribute('aria-selected','false'));
+        r.nextElementSibling?.setAttribute('aria-selected','true');
+        try { window.RolesVoice?.play(name, { fallbackTTSText: '' }); } catch(_) {}
       };
-
       radios.forEach(r => {
-        // change：涵蓋鍵盤切換
         r.addEventListener("change", () => playByRadio(r));
-        // 點卡片(label) 也會觸發 change；保險再播一次（RolesVoice 內建去抖）
         r.closest("label")?.addEventListener("click", () => playByRadio(r));
       });
-
-      // 聚焦/移入卡片也播（抓內層 .card）
       document.querySelectorAll('.grid .card').forEach(card => {
         card.addEventListener('mouseenter', () => {
           const r = card.previousElementSibling; if (!r) return;
           const name = (r.dataset.name || '').trim() || r.value;
-          try { RolesVoice.play(name, { fallbackTTSText: '' }); } catch(_) {}
+          try { window.RolesVoice?.play(name, { fallbackTTSText: '' }); } catch(_) {}
         });
         card.addEventListener('focus', () => {
           const r = card.previousElementSibling; if (!r) return;
           const name = (r.dataset.name || '').trim() || r.value;
-          try { RolesVoice.play(name, { fallbackTTSText: '' }); } catch(_) {}
+          try { window.RolesVoice?.play(name, { fallbackTTSText: '' }); } catch(_) {}
         }, true);
       });
     }
     bindHunterVoice();
 
-    // === 模式切換（即時套用）===
+    // === 模式切換 ===
     document.querySelectorAll('input[name="mode"]').forEach(r => {
-      r.addEventListener('change', () => Modes.setMode(r.value));
+      r.addEventListener('change', () => window.Modes?.setMode(r.value));
     });
-    // 初始同步 radio 勾選
     (function syncRadio() {
-      const cur = Modes.getMode();
+      const cur = window.Modes?.getMode?.() ?? 'visual';
       const el = document.querySelector(`input[name="mode"][value="${cur}"]`);
       if (el) el.checked = true;
     })();
 
-    // === 表單送出（存 mode + 玩家設定）===
+    // === 表單送出 ===
     document.getElementById("playerForm").addEventListener("submit", function (e) {
       e.preventDefault();
-
       const name = document.getElementById("playerName").value.trim();
       if (!name) {
         if (statusEl) statusEl.textContent = "請先輸入暱稱～";
         document.getElementById("playerName").focus();
         return;
       }
-
-      // 存模式（localStorage + 立即套用）
       const chosenMode = document.querySelector('input[name="mode"]:checked')?.value || 'visual';
-      Modes.setMode(chosenMode);
+      window.Modes?.setMode(chosenMode);
 
-      // 你的原流程
       const hunterRadio = document.querySelector('input[name="hunter"]:checked');
       const avatarFile = hunterRadio ? hunterRadio.value : "kinbah.png";
 
@@ -405,16 +305,24 @@
       };
       localStorage.setItem("bugSlayerPlayer", JSON.stringify(player));
 
-      setTimeout(() => { window.location.href = "intro.html"; }, 150);
+            // 存玩家資料後，立刻用「同一個手勢」解鎖音訊，並把旗子帶到下一頁
+      try {
+        // 叫醒你的 Audio 系統（若已載入）
+        window.AudioFX?.init?.();
+        window.AudioFX?.ensure?.();
+
+        // 給下一頁看的時間戳旗子（存 10 秒即可）
+        sessionStorage.setItem('audioArmedAt', String(Date.now()));
+      } catch (_) {}
+
+      location.href = "intro.html"; // 你原本的導頁
     });
 
-    // Enter 直接送出（全頁保險）
+    // Enter 直接送出（非 textarea）
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.isComposing) {
         const form = document.getElementById("playerForm");
-        if (document.activeElement.tagName !== "TEXTAREA") {
-          form.requestSubmit();
-        }
+        if (document.activeElement.tagName !== "TEXTAREA") form.requestSubmit();
       }
     });
 
@@ -430,65 +338,43 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      const nameInput = document.getElementById('playerName');
-      nameInput?.focus({ preventScroll: true });
-
-      // ARIA live 提示
+      document.getElementById('playerName')?.focus({ preventScroll: true });
       const sr = document.getElementById('srName');
       if (sr) sr.textContent = "歡迎來到選角頁。請先輸入暱稱，接著選擇一位獵人，按下開始遊戲。";
-
-      // 語音合成提示（與角色名錄音分開）
       speak("歡迎來到選角頁。請輸入暱稱，使用 Tab 鍵移到獵人清單，方向鍵左右或上下切換，Enter 確認，或直接按開始遊戲。");
     });
 
-    // ===== 卡片鍵盤導覽（方向鍵切換 Radio）=====
+    // 卡片方向鍵導覽
     (function enableArrowNav(){
       const radios = Array.from(document.querySelectorAll('input[name="hunter"]'));
       if (!radios.length) return;
-
       function currentCols(){
         const w = window.innerWidth;
-        if (w <= 520) return 1;
-        if (w <= 900) return 2;
-        return 4;
+        if (w <= 520) return 1; if (w <= 900) return 2; return 4;
       }
-
-      // 讓卡片本體也能接鍵盤焦點
       radios.forEach(r => { const card = r.nextElementSibling; if (card) card.tabIndex = 0; });
-
       function selectIndex(i){
         const r = radios[i]; if (!r) return;
-        r.checked = true;
-        r.dispatchEvent(new Event('change', { bubbles: true }));
+        r.checked = true; r.dispatchEvent(new Event('change', { bubbles: true }));
         r.nextElementSibling?.focus({ preventScroll: true });
       }
-
       document.querySelector('.grid')?.addEventListener('keydown', (e)=>{
         const focusedCard = document.activeElement?.classList?.contains('card') ? document.activeElement : null;
         if (!focusedCard) return;
-
-        const idx = radios.findIndex(r => r.nextElementSibling === focusedCard);
-        if (idx < 0) return;
-
-        const cols = currentCols();
-        let next = idx;
-
+        const idx = radios.findIndex(r => r.nextElementSibling === focusedCard); if (idx < 0) return;
+        const cols = currentCols(); let next = idx;
         if (e.key === 'ArrowRight') next = Math.min(radios.length - 1, idx + 1);
         else if (e.key === 'ArrowLeft') next = Math.max(0, idx - 1);
         else if (e.key === 'ArrowDown') next = Math.min(radios.length - 1, idx + cols);
         else if (e.key === 'ArrowUp') next = Math.max(0, idx - cols);
         else return;
-
-        e.preventDefault();
-        selectIndex(next);
+        e.preventDefault(); selectIndex(next);
       });
     })();
 
-    // 第一次點擊全頁再提醒一次（不會和角色名錄音衝突）
     document.addEventListener("click", () => {
       speak("歡迎來到選角頁。請輸入暱稱，使用 Tab 鍵移到獵人清單，方向鍵左右或上下切換，Enter 確認，或直接按開始遊戲。");
     }, { once: true });
   </script>
-
 </body>
 </html>

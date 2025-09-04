@@ -64,6 +64,7 @@
       _soapTimer: null,       //（保留接口）踩肥皂倒數
       _soapTile: null,        //（保留接口）踩肥皂座標
       _k4AskedByLevel: {},  // 每關已出題數量（實際進入作答才+1）
+      _unbindInputs: null,
 
       // —— L5 相關 —— //
       k5HP: L5.k5BaseHP,      // 這裡改用上面的 L5（不再未定義）
@@ -1344,6 +1345,70 @@
       return (S.mode === "grid")
         ? `第 ${B.pos.x + 1} 行，第 ${B.pos.y + 1} 列`
         : `第 ${B.pos + 1} 格`;
+    },
+
+        _primeAudioOnFirstUserGesture(){
+      const once = ()=>{
+        try {
+          // 若你有全域的 audioContext，這裡 resume；或呼叫你現有的解鎖函式
+          if (window.audioContext && window.audioContext.state === 'suspended') {
+            window.audioContext.resume?.();
+          }
+          if (window.AudioUnlocker && typeof AudioUnlocker.prime === 'function') {
+            AudioUnlocker.prime();
+          }
+        } catch(_) {}
+        document.removeEventListener('pointerdown', once, true);
+        document.removeEventListener('keydown', once, true);
+      };
+      document.addEventListener('pointerdown', once, true);
+      document.addEventListener('keydown', once, true);
+    },
+
+    _ensureMobileLayers(){
+      const root = document.getElementById('gameRoot') || document.body;
+
+      // 手勢層
+      let layer = document.getElementById('gestureLayer');
+      if (!layer) {
+        layer = document.createElement('div');
+        layer.id = 'gestureLayer';
+        layer.className = 'gesture-layer';
+        layer.setAttribute('aria-label', '手勢操作區');
+        root.appendChild(layer);
+      }
+
+      // A11Y 巨型按鈕（供 TalkBack/VoiceOver 使用）
+      let a11y = document.getElementById('a11yControls');
+      if (!a11y) {
+        a11y = document.createElement('div');
+        a11y.id = 'a11yControls';
+        a11y.className = 'a11y-controls';
+        a11y.setAttribute('role', 'group');
+        a11y.setAttribute('aria-label', '可及性操作按鈕');
+        a11y.setAttribute('aria-hidden', 'true');
+        a11y.innerHTML = `
+          <button class="a11y-btn" id="btnUp" aria-keyshortcuts="ArrowUp">上</button>
+          <button class="a11y-btn" id="btnLeft" aria-keyshortcuts="ArrowLeft">左</button>
+          <button class="a11y-btn" id="btnAttack" aria-keyshortcuts="KeyA">攻擊</button>
+          <button class="a11y-btn" id="btnRight" aria-keyshortcuts="ArrowRight">右</button>
+          <button class="a11y-btn" id="btnDown" aria-keyshortcuts="ArrowDown">下</button>
+        `;
+        root.appendChild(a11y);
+      }
+
+      // 觸控最佳化與安全區
+      const stage = document.getElementById('stage');
+      if (stage) stage.style.touchAction = 'none';
+      document.documentElement.style.setProperty('--safe-bottom', 'env(safe-area-inset-bottom)');
+
+      // 粗指標裝置（多半是手機）預設顯示 A11Y 按鈕；桌機隱藏
+      const coarse = window.matchMedia?.('(pointer: coarse)').matches;
+      a11y.setAttribute('aria-hidden', coarse ? 'false' : 'true');
+
+      // 也提供給設定頁手動切換
+      window.enableA11yMode = ()=> a11y.setAttribute('aria-hidden', 'false');
+      window.disableA11yMode = ()=> a11y.setAttribute('aria-hidden', 'true');
     },
 
     // —— 小工具：隨機找一個沒被佔用的格子 —— //

@@ -3,114 +3,208 @@
 <head>
   <meta charset="UTF-8" />
   <title>戰敗… - 進擊的蟑螂</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
   <script src="js/core/audio-unlocker.js"></script>
   <style>
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    display: flex; flex-direction: column;
-    justify-content: center; align-items: center;
-    text-align: center; color: #fff; font-family: sans-serif;
+    :root{
+      --safe-bottom: env(safe-area-inset-bottom);
+      --accent: #ffd452;
+      --shadow: 0 10px 28px rgba(0,0,0,.45);
+    }
+    html, body { height: 100%; }
+    body{
+      margin:0; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      text-align:center; color:#fff; font-family:system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      background:#000 url("assets/images/lose_bg.png") center / cover no-repeat fixed;
+      opacity:0; transition:opacity .45s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    body.ready{ opacity:1; }
+    @media (min-aspect-ratio: 4/3) {
+      body { background-size: contain; background-color:#000; }
+    }
 
-    background: #000 url("assets/images/lose_bg.png") center / cover no-repeat fixed;
-    opacity: 0; transition: opacity .6s ease;
-  }
-  body.ready { opacity: 1; }
+    main{
+      background: rgba(0,0,0,.4);
+      border: 1px solid rgba(255,255,255,.2);
+      border-radius: 18px;
+      padding: clamp(1rem, 3.2vw, 1.5rem);
+      margin: 0 clamp(.8rem, 3.5vw, 1.2rem);
+      backdrop-filter: blur(4px);
+      box-shadow: var(--shadow);
+      max-width: 780px;
+      width: min(94vw, 800px);
+    }
 
-  @media (min-aspect-ratio: 4/3) {
-    body { background-size: contain; background-color: #000; }
-  }
+    h1{
+      margin: .2rem 0 .8rem;
+      font-size: clamp(1.6rem, 4.8vw, 2.2rem);
+      text-shadow: 0 2px 6px rgba(0,0,0,.35);
+    }
+    p{
+      margin: 0 0 1rem;
+      line-height: 1.75;
+      text-shadow: 0 2px 6px rgba(0,0,0,.35);
+      font-size: clamp(1rem, 2.8vw, 1.1rem);
+    }
 
-  h2 {
-    font-size: 2.2rem;
-    margin: 0 0 1rem;
-    text-shadow: 0 2px 6px rgba(0,0,0,.35);
-  }
-  p { margin: 0 0 1.25rem; line-height: 1.7; text-shadow: 0 2px 6px rgba(0,0,0,.35); }
+    .btnbar{
+      display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center;
+      margin-top: 1rem;
+    }
+    .btn{
+      appearance:none; border:none; cursor:pointer;
+      font-weight:900; letter-spacing:.02em;
+      font-size: clamp(1.05rem, 3vw, 1.15rem);
+      padding: .8rem 1.4rem; border-radius: 999px;
+      background: var(--accent); color:#222;
+      box-shadow: var(--shadow);
+      transition: transform .08s ease, filter .12s ease;
+      touch-action: manipulation;
+    }
+    .btn:active{ transform: translateY(1px); }
+    .btn.secondary{ background:#e9e9e9; color:#222; }
+    .btn.ghost{
+      background: transparent; color:#fff; border:2px solid #ffffffaa;
+    }
 
-  .btnbar { display:flex; gap:.75rem; flex-wrap:wrap; justify-content:center; }
-  .btn, button {
-    font-size: 1.1rem; padding: .65rem 1.3rem;
-    border: none; border-radius: 10px; cursor: pointer;
-    background: #ffd452; color: #222;
-  }
-  .btn:hover, button:hover { filter: brightness(1.08); }
-  .btn.secondary { background:#e9e9e9; color:#222; }
+    /* 行動版底部安全留白（若需要貼底） */
+    .cta-pad{ padding-bottom: calc(.2rem + var(--safe-bottom)); }
+
+    /* Skip link（聚焦才顯示） */
+    .skip-link{
+      position:fixed; left:12px; top:10px;
+      transform: translateY(-150%);
+      background:#000; color:#fff;
+      padding:.5rem .75rem; border-radius:10px;
+      border:2px solid var(--accent);
+      box-shadow:0 4px 18px rgba(0,0,0,.45);
+      z-index:10000;
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .skip-link:focus, .skip-link:focus-visible{
+      transform: translateY(0);
+      outline: none;
+      box-shadow:0 6px 24px rgba(0,0,0,.6);
+    }
+
+    /* SR-only */
+    .sr-only{
+      position:absolute!important; width:1px; height:1px; padding:0; margin:-1px;
+      overflow:hidden; clip:rect(0,0,1px,1px); white-space:nowrap; border:0;
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h2>蟑螂們佔領了你的家，但勇者不會放棄！</h2>
+  <a href="#main" class="skip-link">跳到主內容</a>
+
+  <main id="main" tabindex="-1" aria-label="戰敗畫面主內容" class="cta-pad">
+    <h1>蟑螂們佔領了你的家，但勇者不會放棄！</h1>
+
     <div class="btnbar">
-      <button id="retryBtn" class="btn">重試本關</button>
-      <button id="resetBtn" class="btn secondary">從頭開始</button>
+      <button id="retryBtn" class="btn" aria-describedby="retryDesc">重試本關</button>
+      <span id="retryDesc" class="sr-only">將回到此關的介紹頁重新開始。</span>
+
+      <button id="resetBtn" class="btn secondary" aria-describedby="resetDesc">從頭開始</button>
+      <span id="resetDesc" class="sr-only">清除進度並返回首頁。</span>
+
     </div>
   </main>
 
+  <!-- BGM -->
   <audio id="bgm" src="assets/sounds/lose.mp3" preload="auto" autoplay muted playsinline></audio>
 
-      <!-- 在 BGM 之後初始化/登記 -->
   <script>
-    // 1) 初始化（可早就呼叫，多次也沒事）
+    // ========== 音訊初始化 ==========
     AudioFX.init();
-
-    // 2) 登記要解鎖/播放的 BGM（一定要在 <audio> 之後）
     const bgm = document.getElementById('bgm');
     AudioFX.register(bgm);
 
-    // （可選）當你切到焦點模式、或掃描鍵有被觸發時，保險叫醒一次
-    window.addEventListener('game-ready', () => { try { AudioFX.ensure(); } catch(_) {} });
-  </script>
-
-  <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.classList.add('ready');
-
-      // BGM 解鎖
-      const bgm = document.getElementById('bgm');
-      const enableSoundOnce = () => {
-        bgm.muted = false; bgm.volume = 1;
-        bgm.play().catch(()=>{});
-        document.removeEventListener('click', enableSoundOnce);
-        document.removeEventListener('keydown', enableSoundOnce);
-        document.removeEventListener('touchstart', enableSoundOnce);
-      };
-      bgm.play().catch(()=>{});
-      document.addEventListener('click', enableSoundOnce, { once:true });
-      document.addEventListener('keydown', enableSoundOnce, { once:true });
-      document.addEventListener('touchstart', enableSoundOnce, { once:true, passive:true });
-
-      // 語音
-      if ('speechSynthesis' in window) {
-        const u = new SpeechSynthesisUtterance('蟑螂們佔領了你的家。但勇者不會放棄。');
-        u.lang = 'zh-TW';
-        u.onstart = () => { bgm.volume = 0.25; };
-        u.onend   = () => { bgm.volume = 1;    };
+    // ducking 用的 TTS
+    function speakOnce(text){
+      try{
+        if (!('speechSynthesis' in window)) return;
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = 'zh-TW'; u.rate = 1.25; u.pitch = 1.0; u.volume = 1.0;
+        u.onstart = ()=>{ try{ bgm.volume = 0.25; }catch(_){} };
+        u.onend   = ()=>{ try{ bgm.volume = 1.0; }catch(_){} };
         speechSynthesis.cancel(); speechSynthesis.speak(u);
-      }
+      }catch(_){}
+    }
 
-      // ★ 重試本關：只綁一次，讀 sessionStorage 的 lastLevel
-      const retryBtn = document.getElementById('retryBtn');
-      retryBtn?.addEventListener('click', () => {
-        let target = 'level_intro_01.html'; // 後備
-        try {
-          const last = sessionStorage.getItem('lastLevel');
-          if (last && /\.html$/i.test(last)) target = last;
-        } catch(_) {}
-        location.href = './' + target; // 相對路徑更穩
+    // 手勢解鎖 + 淡入
+    (function(){
+      let armed = false;
+      function arm(){
+        if (armed) return; armed = true;
+        try{ AudioFX.ensure(); }catch(_){}
+        try{ bgm.muted = false; }catch(_){}
+        bgm.play().catch(()=>{});
+        document.removeEventListener('pointerdown', arm, true);
+        document.removeEventListener('keydown', arm, true);
+      }
+      // 先嘗試放
+      bgm.play().catch(()=>{});
+      document.addEventListener('pointerdown', arm, true);
+      document.addEventListener('keydown', arm, true);
+    })();
+
+    // ========== 導航邏輯 ==========
+    function levelIntroPathFromParam(){
+      const m = new URLSearchParams(location.search).get('level');
+      const n = Number(m);
+      if (Number.isInteger(n) && n >= 1 && n <= 5) {
+        return `level_intro_0${n}.html`;
+      }
+      return null;
+    }
+
+    function getRetryTarget(){
+      // 1) 以 URL ?level= 優先
+      const byParam = levelIntroPathFromParam();
+      if (byParam) return byParam;
+
+      // 2) 退而求其次：sessionStorage.lastLevel（你之前的機制）
+      try{
+        const last = sessionStorage.getItem('lastLevel');
+        if (last && /\.html$/i.test(last)) return last;
+      }catch(_){}
+
+      // 3) 最後備援：第一關介紹頁
+      return 'level_intro_01.html';
+    }
+
+    document.addEventListener('DOMContentLoaded', ()=>{
+      document.body.classList.add('ready');
+      document.getElementById('main')?.focus({ preventScroll:true });
+
+      // SR 短提示
+      speakOnce('蟑螂們佔領了你的家。但勇者不會放棄。');
+
+      // 綁定按鈕
+      document.getElementById('retryBtn')?.addEventListener('click', ()=>{
+        location.href = getRetryTarget();
       });
 
-      // 從頭開始：清進度回首頁
-      document.getElementById('resetBtn')?.addEventListener('click', () => {
-        try {
-          Object.keys(localStorage).forEach(k => {
+      document.getElementById('resetBtn')?.addEventListener('click', ()=>{
+        try{
+          Object.keys(localStorage).forEach(k=>{
             if (k.startsWith('packApplied_L')) localStorage.removeItem(k);
           });
           localStorage.removeItem('bugSlayerPlayer');
-        } catch(e){}
+          localStorage.removeItem('usedQuizKeys');
+        }catch(_){}
         location.href = 'index.html';
+      });
+
+      // Enter 也能預設選擇「重試本關」
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          location.href = getRetryTarget();
+        }
       });
     });
   </script>
