@@ -170,7 +170,6 @@
     }
     #weaponMenu button:disabled{ opacity:.55; filter:saturate(.7); }
     #weaponToggle{ display: inline-flex; align-items:center; justify-content:center; }
-    }
   </style>
 </head>
 <body class="stage1">
@@ -275,94 +274,97 @@
       });
     }, { once:true });
   </script>
-  
-  <script>
-  (function(){
-    const stage = document.getElementById('gameArea');
 
-    // ===== 共用：往遊戲送「鍵盤事件」的工具 =====
-    function sendKey(key){
-      // 盡量把事件送到舞台，讓既有 Keys 模組接手
-      const ev = new KeyboardEvent('keydown', { key, bubbles:true, cancelable:true });
-      stage?.dispatchEvent(ev);
-      // 若你的 Keys 掛在 document，也多送一份
-      document.dispatchEvent(ev);
+<script>
+(function(){
+  const stage = document.getElementById('gameArea');
+
+  // ===== 往 Keys 模組送鍵 =====
+  function sendKey(key){
+    const ev = new KeyboardEvent('keydown', { key, bubbles:true, cancelable:true });
+    stage?.dispatchEvent(ev);
+    document.dispatchEvent(ev);
+  }
+
+  // ===== 全螢幕手勢參數 =====
+  const GESTURE = {
+    active:false, startX:0, startY:0,
+    lastTapTime:0, lastTapX:0, lastTapY:0,
+    threshold:24, edge:10, dblTime:280, dblDist:24
+  };
+
+  function isInSafeArea(x, y){
+    const w = window.innerWidth, h = window.innerHeight, e = GESTURE.edge;
+    return (x>e && x<w-e && y>e && y<h-e);
+  }
+  function isInteractiveTarget(el){
+    return !!el.closest?.(
+      '#catDialog:not([hidden]), #weaponMenu,'+
+      'button, a, input, select, textarea,'+
+      '[role="button"], [role="dialog"], [aria-haspopup]'
+    );
+  }
+
+  function onTouchStart(e){
+    // 多指/互動區/邊緣 → 忽略
+    const t = e.changedTouches?.[0]; if(!t) return;
+    if (e.touches?.length > 1) return;
+    if (!isInSafeArea(t.clientX, t.clientY)) return;
+    if (isInteractiveTarget(e.target)) return;
+    if (window.gameActive === false) return;
+
+    GESTURE.active = true;
+    GESTURE.startX = t.clientX;
+    GESTURE.startY = t.clientY;
+  }
+
+  function onTouchEnd(e){
+    const t = e.changedTouches?.[0]; if(!t) return;
+
+    // 沒滑動也要允許雙擊
+    if (!GESTURE.active) { detectDoubleTap(t); return; }
+    GESTURE.active = false;
+
+    const dx = t.clientX - GESTURE.startX;
+    const dy = t.clientY - GESTURE.startY;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+
+    // 小位移 → 當點擊（交給雙擊判斷）
+    if (ax < GESTURE.threshold && ay < GESTURE.threshold){
+      detectDoubleTap(t); return;
     }
+    // 大位移 → 判定方向
+    if (ax > ay) sendKey(dx>0 ? 'ArrowRight' : 'ArrowLeft');
+    else         sendKey(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+  }
 
-    // ===== 1) 非螢幕閱讀器情境：整頁手勢（滑動移動、雙擊 Enter） =====
-    const GESTURE = {
-      active: false,
-      startX: 0, startY: 0, lastTapTime: 0, lastTapX: 0, lastTapY: 0,
-      threshold: 24,          // 最小滑動距離（px）
-      edge: 10,               // 安全邊界：避免太貼邊誤觸
-      dblTime: 280,           // 雙擊最大間隔（ms）
-      dblDist: 24             // 雙擊兩點最大距離（px）
-    };
+  function detectDoubleTap(t){
+    const now = performance.now();
+    const dt = now - GESTURE.lastTapTime;
+    const dd = Math.max(
+      Math.abs(t.clientX - GESTURE.lastTapX),
+      Math.abs(t.clientY - GESTURE.lastTapY)
+    );
+    GESTURE.lastTapTime = now;
+    GESTURE.lastTapX = t.clientX;
+    GESTURE.lastTapY = t.clientY;
 
-    function isInSafeArea(x, y){
-      const w = window.innerWidth, h = window.innerHeight;
-      const e = GESTURE.edge;
-      return (x>e && x<w-e && y>e && y<h-e);
+    if (dt <= GESTURE.dblTime && dd <= GESTURE.dblDist){
+      sendKey('Enter');
+      GESTURE.lastTapTime = 0;
     }
-    function isInteractiveTarget(el){
-      // 避免在對話框、選單、按鈕上攔截：尊重 UI 點擊
-      return !!el.closest?.('#catDialog:not([hidden]), #weaponMenu, button, a, input, select, textarea, [role="button"], [role="dialog"]');
-    }
+  }
 
-    function onTouchStart(e){
-      if (!window.gameActive && window.gameActive!==undefined) return;
-      const t = e.changedTouches?.[0]; if(!t) return;
-      if (!isInSafeArea(t.clientX, t.clientY)) return;
-      if (isInteractiveTarget(e.target)) return;   // 讓按鈕自己處理
-      GESTURE.active = true;
-      GESTURE.startX = t.clientX;
-      GESTURE.startY = t.clientY;
-    }
-    function onTouchEnd(e){
-      const t = e.changedTouches?.[0]; if(!t) return;
-      if (!GESTURE.active) {
-        // 仍可做雙擊判斷（輕觸）
-        detectDoubleTap(t);
-        return;
-      }
-      GESTURE.active = false;
+  // ✅ 更穩的觸控判斷 + 直接綁在 document（而不是 window）
+  const supportsTouch =
+    ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    matchMedia('(pointer:coarse)').matches;
 
-      const dx = t.clientX - GESTURE.startX;
-      const dy = t.clientY - GESTURE.startY;
-      const ax = Math.abs(dx), ay = Math.abs(dy);
-      if (ax < GESTURE.threshold && ay < GESTURE.threshold){
-        // 視為「點一下」結束 → 用於雙擊判斷
-        detectDoubleTap(t);
-        return;
-      }
-      // 判定方向（X/Y 取較大者）
-      if (ax > ay) sendKey(dx>0 ? 'ArrowRight' : 'ArrowLeft');
-      else         sendKey(dy>0 ? 'ArrowDown'  : 'ArrowUp');
-    }
-
-    function detectDoubleTap(t){
-      const now = performance.now();
-      const dt  = now - GESTURE.lastTapTime;
-      const dx  = Math.abs(t.clientX - GESTURE.lastTapX);
-      const dy  = Math.abs(t.clientY - GESTURE.lastTapY);
-      GESTURE.lastTapTime = now;
-      GESTURE.lastTapX = t.clientX;
-      GESTURE.lastTapY = t.clientY;
-
-      if (dt <= GESTURE.dblTime && Math.max(dx,dy) <= GESTURE.dblDist){
-        // 雙擊 → Enter
-        sendKey('Enter');
-        // 重置避免三連擊誤判
-        GESTURE.lastTapTime = 0;
-      }
-    }
-
-    // 僅在觸控環境掛載（桌機滑鼠不需要）
-    const isTouch = matchMedia('(hover: none) and (pointer: coarse)').matches;
-    if (isTouch) {
-      window.addEventListener('touchstart', onTouchStart, { passive:true });
-      window.addEventListener('touchend',   onTouchEnd,   { passive:true });
-    }
+  if (supportsTouch) {
+    document.addEventListener('touchstart', onTouchStart, { passive:true });
+    document.addEventListener('touchend',   onTouchEnd,   { passive:true });
+  }
 
     // ===== 2) 螢幕閱讀器情境：顯示 SR 控制疊層（可聚焦按鈕） =====
     // 無法直接偵測「SR 是否開啟」，所以提供：
@@ -507,54 +509,6 @@
     Modes.applyModeOnLoad();
     Modes.bindQuickToggle();
   </script>
-
-  <!-- 舞台手勢：單擊掃描、雙擊攻擊、滑動移動 -->
-  <script>
-  (function(){
-    const area = document.getElementById('gameArea');
-    if (!area) return;
-
-    let t1 = 0, x1 = 0, y1 = 0;
-    let sx=0, sy=0;
-
-    area.addEventListener('touchstart', (e)=>{
-      const t = e.changedTouches[0]; sx = t.clientX; sy = t.clientY;
-    }, { passive: true });
-
-    area.addEventListener('touchend', (e)=>{
-      const now = Date.now();
-      const t = e.changedTouches[0];
-      const dx = t.clientX - sx, dy = t.clientY - sy;
-      const adx = Math.abs(dx), ady = Math.abs(dy);
-
-      const TAP_DIST = 16;
-      const DBL_MS   = 280;
-      const SWIPE    = 28;
-
-      // 滑動移動
-      if (adx > SWIPE || ady > SWIPE) {
-        if (adx > ady) { (dx > 0 ? window.moveRight : window.moveLeft)?.(); }
-        else           { (dy > 0 ? window.moveDown  : window.moveUp  )?.(); }
-        t1 = 0; return;
-      }
-
-      // 點擊（單擊掃描、雙擊攻擊）
-      if (!t1) {
-        t1 = now; x1 = t.clientX; y1 = t.clientY;
-        setTimeout(()=>{ if (t1 && (Date.now()-t1)>=DBL_MS) { t1=0; window.scanArea?.(); } }, DBL_MS+10);
-      } else {
-        const dt = now - t1;
-        const dd = Math.hypot(t.clientX - x1, t.clientY - y1);
-        if (dt <= DBL_MS && dd <= TAP_DIST) { t1 = 0; window.attack?.(); }
-        else {
-          t1 = now; x1 = t.clientX; y1 = t.clientY;
-          setTimeout(()=>{ if (t1 && (Date.now()-t1)>=DBL_MS) { t1=0; window.scanArea?.(); } }, DBL_MS+10);
-        }
-      }
-    }, { passive: true });
-  })();
-  </script>
-
   <!-- 手機：武器浮動選單控制 -->
   <script>
   (function(){
