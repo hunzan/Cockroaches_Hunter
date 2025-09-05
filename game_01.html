@@ -386,105 +386,99 @@
     document.addEventListener('touchend',   onTouchEnd,   { passive:true });
   }
 
-    // ===== 2) 螢幕閱讀器情境：顯示 SR 控制疊層（可聚焦按鈕） =====
-    // 無法直接偵測「SR 是否開啟」，所以提供：
-    //  (a) 启发式：若按鈕被聚焦/雙擊有效，我們保持疊層顯示
-    //  (b) 手動切換：srToggle
-    const overlay = document.getElementById('srControlOverlay');
-    const dpad = document.getElementById('srDpad');
-    const enterPad = document.getElementById('srEnter');
-    const toggleBtn = document.getElementById('srToggle');
-
-    function showOverlay(){
-      document.body.classList.add('show-sr-overlay');
-      toggleBtn.setAttribute('aria-pressed','true');
-      toggleBtn.textContent = '控制：開啟';
-      // ⬇️ 新增：自動聚焦 ENTER
-      const enterBtn = document.querySelector('#srEnter button');
-      enterBtn?.focus({ preventScroll: true });
+    function act(key){
+      switch(key){
+        case 'ArrowLeft':  return window.moveLeft?.();
+        case 'ArrowRight': return window.moveRight?.();
+        case 'ArrowUp':    return window.moveUp?.();
+        case 'ArrowDown':  return window.moveDown?.();
+        case 'Enter':      return window.attack?.();
+        case 'Scan':       return window.scanArea?.();
+      }
     }
-    function hideOverlay(){ document.body.classList.remove('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','false'); toggleBtn.textContent = '控制：自動'; }
 
-    // 預設策略：
-    //  - 若偵測到螢幕閱讀器可能攔截滑動（玩家抱怨移不動），可以按右上角「控制：自動」手動開啟
-    toggleBtn?.addEventListener('click', ()=>{
-      const on = document.body.classList.toggle('show-sr-overlay');
-      toggleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-      toggleBtn.textContent = on ? '控制：開啟' : '控制：自動';
-    });
+    // ===== SR 控制疊層：僅標題用；不做開關判斷（維持你原有 UI） =====
+    const overlay  = document.getElementById('srControlOverlay');
+    const dpad     = document.getElementById('srDpad');
+    const enterPad = document.getElementById('srEnter');
+    const toggleBtn= document.getElementById('srToggle');
 
-    // 讓 D-pad / ENTER 鈕用 act 觸發
-    function wireSrPad(){
-      const dpad = document.getElementById('srDpad');
-      const enterPad = document.getElementById('srEnter');
+    // D-Pad / ENTER → act
+    (function wireSrPad(){
       const hook = (root)=> root?.addEventListener('click', (e)=>{
         const btn = e.target.closest('button[data-key]'); if(!btn) return;
         act(btn.getAttribute('data-key'));
       });
       hook(dpad); hook(enterPad);
+    })();
+
+    // SR 疊層的顯示/隱藏：保留原行為，但不再處理 fullBtn 顯示與否
+    function showOverlay(){
+      document.body.classList.add('show-sr-overlay');
+      toggleBtn?.setAttribute('aria-pressed','true');
+      toggleBtn && (toggleBtn.textContent = '控制：開啟');
+      // 聚焦 ENTER 讓使用者知道位置，再把焦點交給全畫面攻擊鈕（下一節）
+      document.querySelector('#srEnter button')?.focus({ preventScroll:true });
+      setTimeout(ensureFullAttackFocus, 30);
     }
-    wireSrPad();
-
-    // ====== A) 自動全畫面攻擊（無須手動開關） ======
-    const fullBtn = document.getElementById('srAttackFull');
-    let srLikely = false;   // 推測 SR（TalkBack/VO）可能開啟
-
-    function setAttackFull(on){
-      const show = !!on;
-      fullBtn.style.display = show ? 'block' : 'none';
-      if (show) fullBtn.focus({ preventScroll: true }); // 聚焦，讓單指雙擊 anywhere 生效
+    function hideOverlay(){
+      document.body.classList.remove('show-sr-overlay');
+      toggleBtn?.setAttribute('aria-pressed','false');
+      toggleBtn && (toggleBtn.textContent = '控制：自動');
     }
-
-    // SR 模式下：單指雙擊會轉成 click → 攻擊
-    fullBtn.addEventListener('click', ()=> act('Enter'));
-    fullBtn.addEventListener('keydown', (e)=> {
-      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act('Enter'); }
+    // 保留你的切換鍵（可選）
+    toggleBtn?.addEventListener('click', ()=>{
+      if (document.body.classList.toggle('show-sr-overlay')) showOverlay();
+      else hideOverlay();
     });
 
-    // ====== B) 何時自動啟用？（兩種時機） ======
+    // ===== 核心：永遠給 SR 雙擊一個「焦點目標」 =====
+    const fullBtn = document.getElementById('srAttackFull');
 
-    // 1) 玩家做「二指觸控」--> 幾乎可判定 SR 啟用
-    document.addEventListener('touchstart', (e)=>{
-      if (e.touches && e.touches.length >= 2) {
-        srLikely = true;
-        setAttackFull(true);
+    // SR 的單指雙擊會啟動「目前焦點」→ 觸發 click
+    fullBtn.addEventListener('click', () => act('Enter'));
+    fullBtn.addEventListener('keydown', (e)=>{
+      if (e.key==='Enter' || e.key===' ') { e.preventDefault(); act('Enter'); }
+    });
+
+    // 何時「不要」回補焦點？（避免干擾 UI）
+    function uiBlocking(){
+      const catOpen  = !!document.querySelector('#catDialog:not([hidden]):not(.sr-only)');
+      const menu     = document.getElementById('weaponMenu');
+      const menuOpen = !!menu && getComputedStyle(menu).display !== 'none';
+      const quizBusy = document.body.classList.contains('quiz-open'); // 你可在開/關測驗時加/移除此 class
+      const a = document.activeElement;
+      const inForm = a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
+      return catOpen || menuOpen || quizBusy || inForm;
+    }
+
+    // 輕柔回補焦點到 fullBtn（不滾動頁面，避免干擾 SR 朗讀）
+    function ensureFullAttackFocus(){
+      if (uiBlocking()) return;
+      if (document.activeElement !== fullBtn) {
+        fullBtn.focus({ preventScroll:true });
       }
-    }, { passive:true });
+    }
 
-    // 2) 你顯示 SR 控制疊層時（右上角「控制：開啟」）也自動開啟
-    const _showOverlay = showOverlay, _hideOverlay = hideOverlay;
-    showOverlay = function(){
-      _showOverlay();
-      srLikely = true;      // 既然用到 SR 控制，就視為 SR 模式
-      setAttackFull(true);  // 直接啟用全畫面雙擊
-    };
-    hideOverlay = function(){
-      _hideOverlay();
-      setAttackFull(false); // 關閉覆蓋，避免影響一般點選 UI
-    };
+    // 以溫和的節奏維持焦點（不要太頻繁）
+    const focusKeeper = setInterval(ensureFullAttackFocus, 1200);
 
-    // ====== C) 避免干擾互動 UI／對話框 ======
-    // 一旦打開對話框或武器選單，暫時關掉；關閉時再依 srLikely 恢復
-    function pauseAttackOverlay(){ setAttackFull(false); }
-    function resumeAttackOverlay(){ if (srLikely) setAttackFull(true); }
+    // 對外事件：遇到對話框/選單開關時，協助焦點管理
+    window.addEventListener('quiz-open',  ()=> document.body.classList.add('quiz-open'));
+    window.addEventListener('quiz-close', ()=> {
+      document.body.classList.remove('quiz-open');
+      setTimeout(ensureFullAttackFocus, 80);
+    });
+    window.addEventListener('cat-open',   ()=> {/* 若你有派發事件就會生效 */});
+    window.addEventListener('cat-close',  ()=> setTimeout(ensureFullAttackFocus, 80));
 
-    // 你的系統在開關對話框／選單時觸發這些事件的話，掛上去：
-    window.addEventListener('quiz-open',  pauseAttackOverlay);
-    window.addEventListener('quiz-close', resumeAttackOverlay);
+    // 當使用者點到 UI 控件，讓它們自己收/放焦點；結束後由 focusKeeper 回補
+    document.addEventListener('click', ()=>{
+      setTimeout(ensureFullAttackFocus, 120);
+    });
 
-    // 若你有養貓對話 open/close 事件，也可類似掛上
-    window.addEventListener('cat-open',  pauseAttackOverlay);
-    window.addEventListener('cat-close', resumeAttackOverlay);
-
-    // 若使用者主動點了武器選單或其它互動元件，也暫停一次（避免覆蓋點擊）：
-    document.addEventListener('click', (e)=>{
-      const hitUI = e.target.closest?.('#weaponMenu, #weaponToggle, button, a, input, select, textarea, [role="dialog"], [aria-haspopup]');
-      if (hitUI) pauseAttackOverlay();
-    }, true); // capture 階段先行
-    document.addEventListener('click', (e)=>{
-      // UI 點擊完成後，若仍在 SR 模式，恢復覆蓋
-      if (srLikely) resumeAttackOverlay();
-    }, false);
+    // 初次進場也保險回補一次
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(ensureFullAttackFocus, 200));
   })();
   </script>
 

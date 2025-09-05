@@ -354,18 +354,16 @@ body.lock-scroll{
 
 /* 顯示疊層時： */
 body.show-sr-overlay #srControlOverlay{ display:block; }
-/* 全畫面攻擊按鈕（SR 專用） */
-/* 只在需要時顯示；預設隱藏 */
+/* 全畫面攻擊按鈕：SR 雙擊會啟動「目前焦點」→ 讓它永遠可聚焦 */
 #srAttackFull{
   position: fixed;
   inset: var(--safe-edge,10px) var(--safe-edge,10px) calc(140px + env(safe-area-inset-bottom)) var(--safe-edge,10px);
   z-index: 9998;
   background: transparent;
   border: 0;
-  opacity: 0.001;   /* 幾乎不可見但可點/聚焦 */
-  pointer-events: auto;
-  display: none;
+  opacity: 0.001;     /* 幾乎不可見，但可聚焦 */
+  pointer-events: none;  /* 不攔截一般玩家的點擊/滑動 */
+  display: block;        /* 永遠存在，才能被聚焦 */
 }
-body:not(.show-sr-overlay) #srAttackFull { display: none; }  /* 只在疊層開啟時使用 */
 
 
