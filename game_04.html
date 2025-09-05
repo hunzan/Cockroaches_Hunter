@@ -135,10 +135,10 @@
   <main>
     <h1>危機四伏的客廳</h1>
     <p class="sr-only" id="a11yHelp">
-      鍵盤：方向鍵移動；空白鍵掃描；Enter 攻擊；數字 1～4 切換武器。
-      手機：四向滑動移動、單擊掃描、雙擊攻擊。
+      鍵盤：上下左右移動；空白鍵掃描；Enter 攻擊；數字 1~4 切換武器。
+      手機若已開啟螢幕閱讀器：二指滑動移動；單指雙擊任意位置攻擊，螢幕左下角武器選單。
       軍師蟑到爆會發起挑戰，需答題過關或用毒餌才能擊敗牠。
-      障礙：沙發茶几（中央第 3～4 行 × 第 3～5 列）、電視區（最下列第 7 行 × 第 3～5 列）。
+      障礙區：沙發茶几（中央第 3～4 行 × 第 3～5 列）、電視區（最下列第 7 行 × 第 3～5 列）。
     </p>
 
     <!-- 玩家狀態 -->
@@ -163,8 +163,8 @@
   <button id="weaponToggle" aria-label="武器選單">⚔️</button>
   <div id="weaponMenu" role="menu" aria-label="武器選單">
     <button data-wpn="fire"    aria-keyshortcuts="1">1️⃣ 噴火槍</button>
-    <button data-wpn="spray"   aria-keyshortcuts="2">2️⃣ 噴霧</button>
-    <button data-wpn="slipper" aria-keyshortcuts="3">3️⃣ 拖鞋</button>
+    <button data-wpn="spray"   aria-keyshortcuts="2">2️⃣ 香氛噴霧</button>
+    <button data-wpn="slipper" aria-keyshortcuts="3">3️⃣ 藍白拖</button>
     <button data-wpn="bait"    aria-keyshortcuts="4">4️⃣ 毒餌</button>
     <button data-wpn="cat"     aria-keyshortcuts="5" disabled>5️⃣ 養貓</button>
     <button data-wpn="vote"    aria-keyshortcuts="6" disabled>6️⃣ 連署</button>
@@ -232,6 +232,30 @@
   <script src="js/core/keys.js"></script>
   <script src="js/core/retry.js"></script>
   <script> Retry.rememberLevel(); </script>
+
+      <!-- SR 專用控制疊層（VoiceOver/TalkBack） -->
+  <div id="srControlOverlay" aria-hidden="false" aria-label="觸控控制面板">
+    <div id="srDpad" class="pad" role="group" aria-label="方向操作">
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowUp"    aria-label="向上">↑</button>
+      <span class="empty" aria-hidden="true"></span>
+
+      <button type="button" data-key="ArrowLeft"  aria-label="向左">←</button>
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowRight" aria-label="向右">→</button>
+
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowDown"  aria-label="向下">↓</button>
+      <span class="empty" aria-hidden="true"></span>
+    </div>
+
+    <div id="srEnter" class="pad" role="group" aria-label="確認動作">
+      <button type="button" data-key="Enter" aria-label="確認">ENTER</button>
+    </div>
+  </div>
+
+  <button id="srToggle" type="button" aria-pressed="false" aria-label="切換觸控控制面板">控制：自動</button>
+  <button id="srAttackFull" aria-label="攻擊（全畫面雙擊）" title="攻擊（全畫面雙擊）"></button>
 
   <!-- 鍵盤初始化 -->
   <script>
@@ -363,7 +387,14 @@
     const enterPad = document.getElementById('srEnter');
     const toggleBtn = document.getElementById('srToggle');
 
-    function showOverlay(){ document.body.classList.add('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','true'); toggleBtn.textContent = '控制：開啟'; }
+    function showOverlay(){
+      document.body.classList.add('show-sr-overlay');
+      toggleBtn.setAttribute('aria-pressed','true');
+      toggleBtn.textContent = '控制：開啟';
+      // ⬇️ 新增：自動聚焦 ENTER
+      const enterBtn = document.querySelector('#srEnter button');
+      enterBtn?.focus({ preventScroll: true });
+    }
     function hideOverlay(){ document.body.classList.remove('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','false'); toggleBtn.textContent = '控制：自動'; }
 
     // 預設策略：

@@ -354,4 +354,18 @@ body.lock-scroll{
 
 /* 顯示疊層時： */
 body.show-sr-overlay #srControlOverlay{ display:block; }
+/* 全畫面攻擊按鈕（SR 專用） */
+/* 只在需要時顯示；預設隱藏 */
+#srAttackFull{
+  position: fixed;
+  inset: var(--safe-edge,10px) var(--safe-edge,10px) calc(140px + env(safe-area-inset-bottom)) var(--safe-edge,10px);
+  z-index: 9998;
+  background: transparent;
+  border: 0;
+  opacity: 0.001;   /* 幾乎不可見但可點/聚焦 */
+  pointer-events: auto;
+  display: none;
+}
+body:not(.show-sr-overlay) #srAttackFull { display: none; }  /* 只在疊層開啟時使用 */
+
 
