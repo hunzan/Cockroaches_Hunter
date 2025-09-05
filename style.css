@@ -343,15 +343,6 @@ body.lock-scroll{
 }
 #srEnter button:focus{ outline:3px solid #3b82f6; outline-offset:2px; }
 
-/* 手動切換開關（右上角） */
-#srToggle{
-  position: fixed; right: 10px; top: calc(10px + env(safe-area-inset-top));
-  z-index: 10000;
-  background: rgba(0,0,0,.35); color:#fff; border:0; border-radius:10px;
-  font-size:.95rem; padding:.4rem .6rem;
-  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-}
-
 /* 顯示疊層時： */
 body.show-sr-overlay #srControlOverlay{ display:block; }
 /* 全畫面攻擊按鈕：SR 雙擊會啟動「目前焦點」→ 讓它永遠可聚焦 */

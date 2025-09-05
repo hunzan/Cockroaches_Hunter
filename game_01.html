@@ -262,8 +262,10 @@
     </div>
   </div>
 
-  <button id="srToggle" type="button" aria-pressed="false" aria-label="切換觸控控制面板">控制：自動</button>
   <button id="srAttackFull" aria-label="攻擊（全畫面雙擊）" title="攻擊（全畫面雙擊）"></button>
+  <button id="srOverlayOpener" class="sr-only" aria-label="開啟控制面板（D-pad 與 Enter）">
+  開啟控制面板
+  </button>
 
   <!-- 鍵盤初始化（boot 完成/或 game-ready 後） -->
   <script>
@@ -277,115 +279,9 @@
     }, { once:true });
   </script>
 
-<script>
-(function(){
-  // 直接呼叫你的動作 API，避免鍵盤事件路徑不一致
-  function act(key){
-    switch(key){
-      case 'ArrowLeft':  return window.moveLeft?.();
-      case 'ArrowRight': return window.moveRight?.();
-      case 'ArrowUp':    return window.moveUp?.();
-      case 'ArrowDown':  return window.moveDown?.();
-      case 'Enter':      return window.attack?.();
-      case 'Scan':       return window.scanArea?.();
-    }
-  }
-
-  // ===== 全螢幕手勢參數 =====
-  const G = {
-    active:false, startX:0, startY:0,
-    lastTapTime:0, lastTapX:0, lastTapY:0,
-    singleTapTimer:null,
-    threshold:24, edge:10, dblTime:280, dblDist:24
-  };
-
-  function isInSafeArea(x, y){
-    const w = innerWidth, h = innerHeight, e = G.edge;
-    return (x>e && x<w-e && y>e && y<h-e);
-  }
-  function isInteractiveTarget(el){
-    return !!el.closest?.(
-      '#catDialog:not([hidden]), #weaponMenu,'+
-      'button, a, input, select, textarea,'+
-      '[role="button"], [role="dialog"], [aria-haspopup]'
-    );
-  }
-
-  function onTouchStart(e){
-    const t = e.changedTouches?.[0]; if(!t) return;
-    if (e.touches?.length > 1) return;                // 多指忽略
-    if (!isInSafeArea(t.clientX, t.clientY)) return;  // 邊緣保護
-    if (isInteractiveTarget(e.target)) return;        // 讓 UI 自己處理
-    if (window.gameActive === false) return;
-
-    G.active = true;
-    G.startX = t.clientX;
-    G.startY = t.clientY;
-  }
-
-  function onTouchEnd(e){
-    const t = e.changedTouches?.[0]; if(!t) return;
-
-    const dx = t.clientX - G.startX;
-    const dy = t.clientY - G.startY;
-    const ax = Math.abs(dx), ay = Math.abs(dy);
-
-    // 若是滑動（超過閾值）→ 直接移動
-    if (G.active && (ax >= G.threshold || ay >= G.threshold)){
-      G.active = false;
-      if (ax > ay) act(dx>0 ? 'ArrowRight' : 'ArrowLeft');
-      else         act(dy>0 ? 'ArrowDown'  : 'ArrowUp');
-      // 滑動就不做點擊判斷
-      clearSingleTap();
-      return;
-    }
-
-    // 否則當作「點擊序列」→ 雙擊=攻擊，否則延遲觸發掃描
-    handleTap(t);
-    G.active = false;
-  }
-
-  function handleTap(t){
-    const now = performance.now();
-    const dt  = now - G.lastTapTime;
-    const dd  = Math.max(Math.abs(t.clientX - G.lastTapX), Math.abs(t.clientY - G.lastTapY));
-
-    // 記錄這次點擊
-    G.lastTapTime = now;
-    G.lastTapX = t.clientX;
-    G.lastTapY = t.clientY;
-
-    // 若在雙擊門檻內 → 立刻攻擊，並取消單擊掃描
-    if (dt <= G.dblTime && dd <= G.dblDist){
-      clearSingleTap();
-      act('Enter');        // 雙擊 = 攻擊
-      G.lastTapTime = 0;   // 重置，避免三連擊誤判
-      return;
-    }
-
-    // 否則安排單擊 → 掃描（等雙擊時間過了再執行）
-    clearSingleTap();
-    G.singleTapTimer = setTimeout(()=>{
-      act('Scan');         // 單擊 = 掃描
-      G.singleTapTimer = null;
-    }, G.dblTime + 10);
-  }
-
-  function clearSingleTap(){
-    if (G.singleTapTimer){ clearTimeout(G.singleTapTimer); G.singleTapTimer = null; }
-  }
-
-  // ✅ 更穩的觸控判斷 + 綁在 document（全頁有效）
-  const supportsTouch =
-    ('ontouchstart' in window) ||
-    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
-    matchMedia('(pointer:coarse)').matches;
-
-  if (supportsTouch) {
-    document.addEventListener('touchstart', onTouchStart, { passive:true });
-    document.addEventListener('touchend',   onTouchEnd,   { passive:true });
-  }
-
+  <script>
+  (function(){
+    // === 直接呼叫你的動作 API ===
     function act(key){
       switch(key){
         case 'ArrowLeft':  return window.moveLeft?.();
@@ -397,88 +293,120 @@
       }
     }
 
-    // ===== SR 控制疊層：僅標題用；不做開關判斷（維持你原有 UI） =====
-    const overlay  = document.getElementById('srControlOverlay');
+    // ===== 全螢幕手勢：滑動=移動；單擊=掃描；雙擊=攻擊 =====
+    const G = {
+      active:false, startX:0, startY:0,
+      lastTapTime:0, lastTapX:0, lastTapY:0,
+      singleTapTimer:null,
+      threshold:24, edge:10, dblTime:280, dblDist:24
+    };
+
+    function isInSafeArea(x,y){ const w=innerWidth,h=innerHeight,e=G.edge; return (x>e && x<w-e && y>e && y<h-e); }
+    function isInteractiveTarget(el){
+      return !!el.closest?.(
+        '#catDialog:not([hidden]), #weaponMenu,'+
+        'button, a, input, select, textarea,'+
+        '[role="button"], [role="dialog"], [aria-haspopup]'
+      );
+    }
+
+    function onTouchStart(e){
+      const t=e.changedTouches?.[0]; if(!t) return;
+      if (e.touches?.length>1) return;
+      if (!isInSafeArea(t.clientX,t.clientY)) return;
+      if (isInteractiveTarget(e.target)) return;
+      if (window.gameActive===false) return;
+      G.active=true; G.startX=t.clientX; G.startY=t.clientY;
+    }
+    function onTouchEnd(e){
+      const t=e.changedTouches?.[0]; if(!t) return;
+      const dx=t.clientX-G.startX, dy=t.clientY-G.startY;
+      const ax=Math.abs(dx), ay=Math.abs(dy);
+      if (G.active && (ax>=G.threshold || ay>=G.threshold)){
+        G.active=false;
+        if (ax>ay) act(dx>0?'ArrowRight':'ArrowLeft');
+        else       act(dy>0?'ArrowDown' :'ArrowUp');
+        clearSingleTap(); return;
+      }
+      handleTap(t); G.active=false;
+    }
+    function handleTap(t){
+      const now=performance.now();
+      const dt=now-G.lastTapTime;
+      const dd=Math.max(Math.abs(t.clientX-G.lastTapX), Math.abs(t.clientY-G.lastTapY));
+      G.lastTapTime=now; G.lastTapX=t.clientX; G.lastTapY=t.clientY;
+      if (dt<=G.dblTime && dd<=G.dblDist){
+        clearSingleTap(); act('Enter'); G.lastTapTime=0; return;
+      }
+      clearSingleTap();
+      G.singleTapTimer=setTimeout(()=>{ act('Scan'); G.singleTapTimer=null; }, G.dblTime+10);
+    }
+    function clearSingleTap(){ if (G.singleTapTimer){ clearTimeout(G.singleTapTimer); G.singleTapTimer=null; } }
+
+    const supportsTouch = ('ontouchstart' in window) || (navigator.maxTouchPoints>0) || matchMedia('(pointer:coarse)').matches;
+    if (supportsTouch){
+      document.addEventListener('touchstart', onTouchStart, { passive:true });
+      document.addEventListener('touchend',   onTouchEnd,   { passive:true });
+    }
+
+    // ===== SR 控制面板（D-pad/Enter）配線（可選開啟） =====
     const dpad     = document.getElementById('srDpad');
     const enterPad = document.getElementById('srEnter');
-    const toggleBtn= document.getElementById('srToggle');
 
-    // D-Pad / ENTER → act
     (function wireSrPad(){
       const hook = (root)=> root?.addEventListener('click', (e)=>{
-        const btn = e.target.closest('button[data-key]'); if(!btn) return;
+        const btn=e.target.closest('button[data-key]'); if(!btn) return;
         act(btn.getAttribute('data-key'));
       });
       hook(dpad); hook(enterPad);
     })();
 
-    // SR 疊層的顯示/隱藏：保留原行為，但不再處理 fullBtn 顯示與否
+    // 顯示/隱藏面板 API（不再依賴 srToggle）
     function showOverlay(){
       document.body.classList.add('show-sr-overlay');
-      toggleBtn?.setAttribute('aria-pressed','true');
-      toggleBtn && (toggleBtn.textContent = '控制：開啟');
-      // 聚焦 ENTER 讓使用者知道位置，再把焦點交給全畫面攻擊鈕（下一節）
       document.querySelector('#srEnter button')?.focus({ preventScroll:true });
-      setTimeout(ensureFullAttackFocus, 30);
+      setTimeout(()=>{ document.getElementById('srAttackFull')?.focus({ preventScroll:true }); }, 30);
     }
     function hideOverlay(){
       document.body.classList.remove('show-sr-overlay');
-      toggleBtn?.setAttribute('aria-pressed','false');
-      toggleBtn && (toggleBtn.textContent = '控制：自動');
     }
-    // 保留你的切換鍵（可選）
-    toggleBtn?.addEventListener('click', ()=>{
-      if (document.body.classList.toggle('show-sr-overlay')) showOverlay();
-      else hideOverlay();
-    });
 
-    // ===== 核心：永遠給 SR 雙擊一個「焦點目標」 =====
+    // ===== 永遠給 SR 雙擊一個焦點目標（全畫面攻擊） =====
     const fullBtn = document.getElementById('srAttackFull');
+    fullBtn.addEventListener('click', ()=> act('Enter'));
+    fullBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' '){ e.preventDefault(); act('Enter'); } });
 
-    // SR 的單指雙擊會啟動「目前焦點」→ 觸發 click
-    fullBtn.addEventListener('click', () => act('Enter'));
-    fullBtn.addEventListener('keydown', (e)=>{
-      if (e.key==='Enter' || e.key===' ') { e.preventDefault(); act('Enter'); }
-    });
-
-    // 何時「不要」回補焦點？（避免干擾 UI）
     function uiBlocking(){
       const catOpen  = !!document.querySelector('#catDialog:not([hidden]):not(.sr-only)');
       const menu     = document.getElementById('weaponMenu');
-      const menuOpen = !!menu && getComputedStyle(menu).display !== 'none';
-      const quizBusy = document.body.classList.contains('quiz-open'); // 你可在開/關測驗時加/移除此 class
-      const a = document.activeElement;
-      const inForm = a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
+      const menuOpen = !!menu && getComputedStyle(menu).display!=='none';
+      const quizBusy = document.body.classList.contains('quiz-open');
+      const a=document.activeElement, inForm=a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName);
       return catOpen || menuOpen || quizBusy || inForm;
     }
-
-    // 輕柔回補焦點到 fullBtn（不滾動頁面，避免干擾 SR 朗讀）
     function ensureFullAttackFocus(){
       if (uiBlocking()) return;
-      if (document.activeElement !== fullBtn) {
-        fullBtn.focus({ preventScroll:true });
-      }
+      if (document.activeElement !== fullBtn) fullBtn.focus({ preventScroll:true });
     }
+    setInterval(ensureFullAttackFocus, 1200);
 
-    // 以溫和的節奏維持焦點（不要太頻繁）
-    const focusKeeper = setInterval(ensureFullAttackFocus, 1200);
-
-    // 對外事件：遇到對話框/選單開關時，協助焦點管理
     window.addEventListener('quiz-open',  ()=> document.body.classList.add('quiz-open'));
-    window.addEventListener('quiz-close', ()=> {
-      document.body.classList.remove('quiz-open');
-      setTimeout(ensureFullAttackFocus, 80);
-    });
-    window.addEventListener('cat-open',   ()=> {/* 若你有派發事件就會生效 */});
-    window.addEventListener('cat-close',  ()=> setTimeout(ensureFullAttackFocus, 80));
+    window.addEventListener('quiz-close', ()=> { document.body.classList.remove('quiz-open'); setTimeout(ensureFullAttackFocus,80); });
+    window.addEventListener('cat-open',   ()=> {});
+    window.addEventListener('cat-close',  ()=> setTimeout(ensureFullAttackFocus,80));
+    document.addEventListener('click',    ()=> setTimeout(ensureFullAttackFocus,120));
+    document.addEventListener('DOMContentLoaded', ()=> setTimeout(ensureFullAttackFocus,200));
 
-    // 當使用者點到 UI 控件，讓它們自己收/放焦點；結束後由 focusKeeper 回補
-    document.addEventListener('click', ()=>{
-      setTimeout(ensureFullAttackFocus, 120);
+    // 3-A：桌機測試熱鍵（Shift+O）
+    document.addEventListener('keydown', (e)=>{
+      if (e.shiftKey && (e.key==='O' || e.key==='o')){
+        if (document.body.classList.contains('show-sr-overlay')) hideOverlay();
+        else showOverlay();
+      }
     });
 
-    // 初次進場也保險回補一次
-    document.addEventListener('DOMContentLoaded', ()=> setTimeout(ensureFullAttackFocus, 200));
+    // 3-B：SR 專用隱藏按鈕（你已放在 HTML 了）
+    document.getElementById('srOverlayOpener')?.addEventListener('click', ()=> showOverlay());
   })();
   </script>
 
