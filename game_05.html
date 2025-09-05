@@ -136,7 +136,7 @@
       box-shadow:0 3px 8px rgba(0,0,0,.25);
     }
     #weaponMenu button:disabled{ opacity:.55; filter:saturate(.7); }
-    #weaponToggle{ display:inline-flex; align-items:center; justify-content:center; } }
+    #weaponToggle{ display:inline-flex; align-items:center; justify-content:center; }
     @media (pointer:fine){
     /* 只影響滑鼠/桌機，不動手機 */
     #gameArea{
@@ -309,6 +309,157 @@
     }, { once:true });
   </script>
 
+    <script>
+(function(){
+  // 直接呼叫你的動作 API，避免鍵盤事件路徑不一致
+  function act(key){
+    switch(key){
+      case 'ArrowLeft':  return window.moveLeft?.();
+      case 'ArrowRight': return window.moveRight?.();
+      case 'ArrowUp':    return window.moveUp?.();
+      case 'ArrowDown':  return window.moveDown?.();
+      case 'Enter':      return window.attack?.();
+      case 'Scan':       return window.scanArea?.();
+    }
+  }
+
+  // ===== 全螢幕手勢參數 =====
+  const G = {
+    active:false, startX:0, startY:0,
+    lastTapTime:0, lastTapX:0, lastTapY:0,
+    singleTapTimer:null,
+    threshold:24, edge:10, dblTime:280, dblDist:24
+  };
+
+  function isInSafeArea(x, y){
+    const w = innerWidth, h = innerHeight, e = G.edge;
+    return (x>e && x<w-e && y>e && y<h-e);
+  }
+  function isInteractiveTarget(el){
+    return !!el.closest?.(
+      '#catDialog:not([hidden]), #weaponMenu,'+
+      'button, a, input, select, textarea,'+
+      '[role="button"], [role="dialog"], [aria-haspopup]'
+    );
+  }
+
+  function onTouchStart(e){
+    const t = e.changedTouches?.[0]; if(!t) return;
+    if (e.touches?.length > 1) return;                // 多指忽略
+    if (!isInSafeArea(t.clientX, t.clientY)) return;  // 邊緣保護
+    if (isInteractiveTarget(e.target)) return;        // 讓 UI 自己處理
+    if (window.gameActive === false) return;
+
+    G.active = true;
+    G.startX = t.clientX;
+    G.startY = t.clientY;
+  }
+
+  function onTouchEnd(e){
+    const t = e.changedTouches?.[0]; if(!t) return;
+
+    const dx = t.clientX - G.startX;
+    const dy = t.clientY - G.startY;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+
+    // 若是滑動（超過閾值）→ 直接移動
+    if (G.active && (ax >= G.threshold || ay >= G.threshold)){
+      G.active = false;
+      if (ax > ay) act(dx>0 ? 'ArrowRight' : 'ArrowLeft');
+      else         act(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+      // 滑動就不做點擊判斷
+      clearSingleTap();
+      return;
+    }
+
+    // 否則當作「點擊序列」→ 雙擊=攻擊，否則延遲觸發掃描
+    handleTap(t);
+    G.active = false;
+  }
+
+  function handleTap(t){
+    const now = performance.now();
+    const dt  = now - G.lastTapTime;
+    const dd  = Math.max(Math.abs(t.clientX - G.lastTapX), Math.abs(t.clientY - G.lastTapY));
+
+    // 記錄這次點擊
+    G.lastTapTime = now;
+    G.lastTapX = t.clientX;
+    G.lastTapY = t.clientY;
+
+    // 若在雙擊門檻內 → 立刻攻擊，並取消單擊掃描
+    if (dt <= G.dblTime && dd <= G.dblDist){
+      clearSingleTap();
+      act('Enter');        // 雙擊 = 攻擊
+      G.lastTapTime = 0;   // 重置，避免三連擊誤判
+      return;
+    }
+
+    // 否則安排單擊 → 掃描（等雙擊時間過了再執行）
+    clearSingleTap();
+    G.singleTapTimer = setTimeout(()=>{
+      act('Scan');         // 單擊 = 掃描
+      G.singleTapTimer = null;
+    }, G.dblTime + 10);
+  }
+
+  function clearSingleTap(){
+    if (G.singleTapTimer){ clearTimeout(G.singleTapTimer); G.singleTapTimer = null; }
+  }
+
+  // ✅ 更穩的觸控判斷 + 綁在 document（全頁有效）
+  const supportsTouch =
+    ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    matchMedia('(pointer:coarse)').matches;
+
+  if (supportsTouch) {
+    document.addEventListener('touchstart', onTouchStart, { passive:true });
+    document.addEventListener('touchend',   onTouchEnd,   { passive:true });
+  }
+
+    // ===== 2) 螢幕閱讀器情境：顯示 SR 控制疊層（可聚焦按鈕） =====
+    // 無法直接偵測「SR 是否開啟」，所以提供：
+    //  (a) 启发式：若按鈕被聚焦/雙擊有效，我們保持疊層顯示
+    //  (b) 手動切換：srToggle
+    const overlay = document.getElementById('srControlOverlay');
+    const dpad = document.getElementById('srDpad');
+    const enterPad = document.getElementById('srEnter');
+    const toggleBtn = document.getElementById('srToggle');
+
+    function showOverlay(){ document.body.classList.add('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','true'); toggleBtn.textContent = '控制：開啟'; }
+    function hideOverlay(){ document.body.classList.remove('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','false'); toggleBtn.textContent = '控制：自動'; }
+
+    // 預設策略：
+    //  - 若偵測到螢幕閱讀器可能攔截滑動（玩家抱怨移不動），可以按右上角「控制：自動」手動開啟
+    toggleBtn?.addEventListener('click', ()=>{
+      const on = document.body.classList.toggle('show-sr-overlay');
+      toggleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      toggleBtn.textContent = on ? '控制：開啟' : '控制：自動';
+    });
+
+    // 讓 D-pad / ENTER 鈕用 act 觸發
+    function wireSrPad(){
+      const dpad = document.getElementById('srDpad');
+      const enterPad = document.getElementById('srEnter');
+      const hook = (root)=> root?.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-key]'); if(!btn) return;
+        act(btn.getAttribute('data-key'));
+      });
+      hook(dpad); hook(enterPad);
+    }
+    wireSrPad();
+
+    // 你也可以在切換「養貓對話」、「測驗視窗」時，暫時自動開/關疊層：
+    window.addEventListener('quiz-open',  ()=> showOverlay());   // 測驗期間建議用按鈕操作
+    window.addEventListener('quiz-close', ()=> hideOverlay());
+
+    // 若你想「自動判斷 SR 可能開啟 → 顯示疊層」，
+    // 可以觀察使用者嘗試滑動卻 5 秒內沒有任何移動成功事件，再自動 showOverlay()。
+    // 這裡先留介面（避免誤判），保守交由玩家手動切換。
+  })();
+  </script>
+
   <!-- A11Y 初始化（含 Quiz 忙碌偵測） -->
   <script>
   document.addEventListener('game-ready', () => {
@@ -387,65 +538,6 @@
 
   <!-- 啟動腳本（第 5 關） -->
   <script src="js/boot/game_l5.js"></script>
-
-  <script>
-  (function(){
-    const isMobile = () =>
-      window.matchMedia && matchMedia('(pointer:coarse)').matches;
-
-    function applyMobileSizing(stage){
-      // 讀格數（ModeGrid 已設好就讀它；否則 fallback 10×10）
-      const cs = getComputedStyle(stage);
-      const countTracks = (tpl)=> (tpl && tpl.trim()) ? tpl.split(/\s+/).filter(Boolean).length : 0;
-      let cols = countTracks(cs.gridTemplateColumns) || (window.game?.mode?.w) || 10;
-      let rows = countTracks(cs.gridTemplateRows)    || (window.game?.mode?.h) || 10;
-
-      // 可用視窗寬高（保留上下左右空間，避免被狀態膠囊或安全區擠到）
-      const vw = Math.min(innerWidth, (visualViewport?.width || innerWidth));
-      const vh = Math.min(innerHeight, (visualViewport?.height || innerHeight));
-      const sidePad = 24;
-      const topReserve = 84; // 標題/狀態膠囊
-      const bottomReserve = 24 + (parseInt(getComputedStyle(document.documentElement)
-                            .getPropertyValue('--safe-area-inset-bottom')) || 0);
-
-      const maxByW = Math.floor((vw - sidePad*2) / cols);
-      const maxByH = Math.floor((vh - topReserve - bottomReserve) / rows);
-
-      const MIN_CELL = 26;
-      const MAX_CELL = 56;
-      const cell = Math.max(MIN_CELL, Math.min(maxByW, maxByH, MAX_CELL));
-
-      // 行動版採用固定 px，確保 10×10 必定塞進去
-      stage.style.display = 'grid';
-      stage.style.gap = '0';
-      stage.style.gridTemplateColumns = `repeat(${cols}, ${cell}px)`;
-      stage.style.gridTemplateRows    = `repeat(${rows}, ${cell}px)`;
-      stage.style.width  = (cols * cell) + 'px';
-      stage.style.height = (rows * cell) + 'px';
-      stage.style.marginLeft = 'auto';
-      stage.style.marginRight = 'auto';
-    }
-
-    function resetDesktopSizing(stage){
-      // 把我們加過的 inline 樣式清掉，交回給 CSS/ModeGrid（fr）接管
-      ['gridTemplateColumns','gridTemplateRows','width','height','gap',
-       'marginLeft','marginRight','display'
-      ].forEach(p => stage.style[p] = '');
-    }
-
-    function refresh(){
-      const stage = document.getElementById('gameArea');
-      if (!stage) return;
-      if (isMobile()) applyMobileSizing(stage);
-      else resetDesktopSizing(stage);
-    }
-
-    document.addEventListener('game-ready', refresh, { once:true });
-    window.addEventListener('orientationchange', refresh);
-    window.addEventListener('resize', refresh);
-    if (window.visualViewport) visualViewport.addEventListener('resize', refresh);
-  })();
-  </script>
 
   <!-- 模式切換（Shift+M） -->
   <script> Modes.applyModeOnLoad(); Modes.bindQuickToggle(); </script>

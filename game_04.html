@@ -128,7 +128,7 @@
       box-shadow:0 3px 8px rgba(0,0,0,.25);
     }
     #weaponMenu button:disabled{ opacity:.55; filter:saturate(.7); }
-    #weaponToggle{ display:inline-flex; align-items:center; justify-content:center; } }
+    #weaponToggle{ display:inline-flex; align-items:center; justify-content:center; }
   </style>
 </head>
 <body class="stage4">
@@ -245,6 +245,157 @@
     }, { once:true });
   </script>
 
+    <script>
+(function(){
+  // 直接呼叫你的動作 API，避免鍵盤事件路徑不一致
+  function act(key){
+    switch(key){
+      case 'ArrowLeft':  return window.moveLeft?.();
+      case 'ArrowRight': return window.moveRight?.();
+      case 'ArrowUp':    return window.moveUp?.();
+      case 'ArrowDown':  return window.moveDown?.();
+      case 'Enter':      return window.attack?.();
+      case 'Scan':       return window.scanArea?.();
+    }
+  }
+
+  // ===== 全螢幕手勢參數 =====
+  const G = {
+    active:false, startX:0, startY:0,
+    lastTapTime:0, lastTapX:0, lastTapY:0,
+    singleTapTimer:null,
+    threshold:24, edge:10, dblTime:280, dblDist:24
+  };
+
+  function isInSafeArea(x, y){
+    const w = innerWidth, h = innerHeight, e = G.edge;
+    return (x>e && x<w-e && y>e && y<h-e);
+  }
+  function isInteractiveTarget(el){
+    return !!el.closest?.(
+      '#catDialog:not([hidden]), #weaponMenu,'+
+      'button, a, input, select, textarea,'+
+      '[role="button"], [role="dialog"], [aria-haspopup]'
+    );
+  }
+
+  function onTouchStart(e){
+    const t = e.changedTouches?.[0]; if(!t) return;
+    if (e.touches?.length > 1) return;                // 多指忽略
+    if (!isInSafeArea(t.clientX, t.clientY)) return;  // 邊緣保護
+    if (isInteractiveTarget(e.target)) return;        // 讓 UI 自己處理
+    if (window.gameActive === false) return;
+
+    G.active = true;
+    G.startX = t.clientX;
+    G.startY = t.clientY;
+  }
+
+  function onTouchEnd(e){
+    const t = e.changedTouches?.[0]; if(!t) return;
+
+    const dx = t.clientX - G.startX;
+    const dy = t.clientY - G.startY;
+    const ax = Math.abs(dx), ay = Math.abs(dy);
+
+    // 若是滑動（超過閾值）→ 直接移動
+    if (G.active && (ax >= G.threshold || ay >= G.threshold)){
+      G.active = false;
+      if (ax > ay) act(dx>0 ? 'ArrowRight' : 'ArrowLeft');
+      else         act(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+      // 滑動就不做點擊判斷
+      clearSingleTap();
+      return;
+    }
+
+    // 否則當作「點擊序列」→ 雙擊=攻擊，否則延遲觸發掃描
+    handleTap(t);
+    G.active = false;
+  }
+
+  function handleTap(t){
+    const now = performance.now();
+    const dt  = now - G.lastTapTime;
+    const dd  = Math.max(Math.abs(t.clientX - G.lastTapX), Math.abs(t.clientY - G.lastTapY));
+
+    // 記錄這次點擊
+    G.lastTapTime = now;
+    G.lastTapX = t.clientX;
+    G.lastTapY = t.clientY;
+
+    // 若在雙擊門檻內 → 立刻攻擊，並取消單擊掃描
+    if (dt <= G.dblTime && dd <= G.dblDist){
+      clearSingleTap();
+      act('Enter');        // 雙擊 = 攻擊
+      G.lastTapTime = 0;   // 重置，避免三連擊誤判
+      return;
+    }
+
+    // 否則安排單擊 → 掃描（等雙擊時間過了再執行）
+    clearSingleTap();
+    G.singleTapTimer = setTimeout(()=>{
+      act('Scan');         // 單擊 = 掃描
+      G.singleTapTimer = null;
+    }, G.dblTime + 10);
+  }
+
+  function clearSingleTap(){
+    if (G.singleTapTimer){ clearTimeout(G.singleTapTimer); G.singleTapTimer = null; }
+  }
+
+  // ✅ 更穩的觸控判斷 + 綁在 document（全頁有效）
+  const supportsTouch =
+    ('ontouchstart' in window) ||
+    (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
+    matchMedia('(pointer:coarse)').matches;
+
+  if (supportsTouch) {
+    document.addEventListener('touchstart', onTouchStart, { passive:true });
+    document.addEventListener('touchend',   onTouchEnd,   { passive:true });
+  }
+
+    // ===== 2) 螢幕閱讀器情境：顯示 SR 控制疊層（可聚焦按鈕） =====
+    // 無法直接偵測「SR 是否開啟」，所以提供：
+    //  (a) 启发式：若按鈕被聚焦/雙擊有效，我們保持疊層顯示
+    //  (b) 手動切換：srToggle
+    const overlay = document.getElementById('srControlOverlay');
+    const dpad = document.getElementById('srDpad');
+    const enterPad = document.getElementById('srEnter');
+    const toggleBtn = document.getElementById('srToggle');
+
+    function showOverlay(){ document.body.classList.add('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','true'); toggleBtn.textContent = '控制：開啟'; }
+    function hideOverlay(){ document.body.classList.remove('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','false'); toggleBtn.textContent = '控制：自動'; }
+
+    // 預設策略：
+    //  - 若偵測到螢幕閱讀器可能攔截滑動（玩家抱怨移不動），可以按右上角「控制：自動」手動開啟
+    toggleBtn?.addEventListener('click', ()=>{
+      const on = document.body.classList.toggle('show-sr-overlay');
+      toggleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      toggleBtn.textContent = on ? '控制：開啟' : '控制：自動';
+    });
+
+    // 讓 D-pad / ENTER 鈕用 act 觸發
+    function wireSrPad(){
+      const dpad = document.getElementById('srDpad');
+      const enterPad = document.getElementById('srEnter');
+      const hook = (root)=> root?.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-key]'); if(!btn) return;
+        act(btn.getAttribute('data-key'));
+      });
+      hook(dpad); hook(enterPad);
+    }
+    wireSrPad();
+
+    // 你也可以在切換「養貓對話」、「測驗視窗」時，暫時自動開/關疊層：
+    window.addEventListener('quiz-open',  ()=> showOverlay());   // 測驗期間建議用按鈕操作
+    window.addEventListener('quiz-close', ()=> hideOverlay());
+
+    // 若你想「自動判斷 SR 可能開啟 → 顯示疊層」，
+    // 可以觀察使用者嘗試滑動卻 5 秒內沒有任何移動成功事件，再自動 showOverlay()。
+    // 這裡先留介面（避免誤判），保守交由玩家手動切換。
+  })();
+  </script>
+
   <!-- A11Y 初始化 -->
   <script>
   document.addEventListener('game-ready', () => {
@@ -341,43 +492,6 @@
   <script>
     Modes.applyModeOnLoad();
     Modes.bindQuickToggle();
-  </script>
-
-  <!-- 舞台手勢：單擊掃描、雙擊攻擊、四向滑動移動 -->
-  <script>
-  (function(){
-    const area = document.getElementById('gameArea');
-    if (!area) return;
-    let t1=0, x1=0, y1=0, sx=0, sy=0;
-
-    area.addEventListener('touchstart', (e)=>{ const t=e.changedTouches[0]; sx=t.clientX; sy=t.clientY; }, { passive:true });
-
-    area.addEventListener('touchend', (e)=>{
-      const now=Date.now();
-      const t=e.changedTouches[0];
-      const dx=t.clientX - sx, dy=t.clientY - sy;
-      const adx=Math.abs(dx), ady=Math.abs(dy);
-      const TAP_DIST=16, DBL_MS=280, SWIPE=28;
-
-      if (adx>SWIPE || ady>SWIPE){
-        if (adx>ady) { (dx>0 ? window.moveRight : window.moveLeft)?.(); }
-        else { (dy>0 ? window.moveDown : window.moveUp)?.(); }
-        t1=0; return;
-      }
-
-      if (!t1){
-        t1=now; x1=t.clientX; y1=t.clientY;
-        setTimeout(()=>{ if(t1 && (Date.now()-t1)>=DBL_MS){ t1=0; window.scanArea?.(); } }, DBL_MS+10);
-      } else {
-        const dt=now-t1, dd=Math.hypot(t.clientX-x1, t.clientY-y1);
-        if (dt<=DBL_MS && dd<=TAP_DIST){ t1=0; window.attack?.(); }
-        else {
-          t1=now; x1=t.clientX; y1=t.clientY;
-          setTimeout(()=>{ if(t1 && (Date.now()-t1)>=DBL_MS){ t1=0; window.scanArea?.(); } }, DBL_MS+10);
-        }
-      }
-    }, { passive:true });
-  })();
   </script>
 
   <!-- 手機武器選單 -->
