@@ -277,30 +277,28 @@
 
 <script>
 (function(){
-  const stage = document.getElementById('gameArea');
-
-  // ===== 往 Keys 模組送鍵 =====
-  function sendKey(key){
-    // 只送給舞台，不要再送 document
-    const ev = new KeyboardEvent('keydown', {
-      key,
-      bubbles: false,          // 避免再冒泡到 document 造成第二次處理
-      cancelable: true
-    });
-    // 確保舞台有焦點（有些 Keys 需要焦點才吃）
-    if (stage && typeof stage.focus === 'function') stage.focus();
-    stage?.dispatchEvent(ev);
+  // 直接呼叫你的動作 API，避免鍵盤事件路徑不一致
+  function act(key){
+    switch(key){
+      case 'ArrowLeft':  return window.moveLeft?.();
+      case 'ArrowRight': return window.moveRight?.();
+      case 'ArrowUp':    return window.moveUp?.();
+      case 'ArrowDown':  return window.moveDown?.();
+      case 'Enter':      return window.attack?.();
+      case 'Scan':       return window.scanArea?.();
+    }
   }
 
   // ===== 全螢幕手勢參數 =====
-  const GESTURE = {
+  const G = {
     active:false, startX:0, startY:0,
     lastTapTime:0, lastTapX:0, lastTapY:0,
+    singleTapTimer:null,
     threshold:24, edge:10, dblTime:280, dblDist:24
   };
 
   function isInSafeArea(x, y){
-    const w = window.innerWidth, h = window.innerHeight, e = GESTURE.edge;
+    const w = innerWidth, h = innerHeight, e = G.edge;
     return (x>e && x<w-e && y>e && y<h-e);
   }
   function isInteractiveTarget(el){
@@ -312,56 +310,70 @@
   }
 
   function onTouchStart(e){
-    // 多指/互動區/邊緣 → 忽略
     const t = e.changedTouches?.[0]; if(!t) return;
-    if (e.touches?.length > 1) return;
-    if (!isInSafeArea(t.clientX, t.clientY)) return;
-    if (isInteractiveTarget(e.target)) return;
+    if (e.touches?.length > 1) return;                // 多指忽略
+    if (!isInSafeArea(t.clientX, t.clientY)) return;  // 邊緣保護
+    if (isInteractiveTarget(e.target)) return;        // 讓 UI 自己處理
     if (window.gameActive === false) return;
 
-    GESTURE.active = true;
-    GESTURE.startX = t.clientX;
-    GESTURE.startY = t.clientY;
+    G.active = true;
+    G.startX = t.clientX;
+    G.startY = t.clientY;
   }
 
   function onTouchEnd(e){
     const t = e.changedTouches?.[0]; if(!t) return;
 
-    // 沒滑動也要允許雙擊
-    if (!GESTURE.active) { detectDoubleTap(t); return; }
-    GESTURE.active = false;
-
-    const dx = t.clientX - GESTURE.startX;
-    const dy = t.clientY - GESTURE.startY;
+    const dx = t.clientX - G.startX;
+    const dy = t.clientY - G.startY;
     const ax = Math.abs(dx), ay = Math.abs(dy);
 
-    // 小位移 → 當點擊（交給雙擊判斷）
-    if (ax < GESTURE.threshold && ay < GESTURE.threshold){
-      detectDoubleTap(t); return;
+    // 若是滑動（超過閾值）→ 直接移動
+    if (G.active && (ax >= G.threshold || ay >= G.threshold)){
+      G.active = false;
+      if (ax > ay) act(dx>0 ? 'ArrowRight' : 'ArrowLeft');
+      else         act(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+      // 滑動就不做點擊判斷
+      clearSingleTap();
+      return;
     }
-    // 大位移 → 判定方向
-    if (ax > ay) sendKey(dx>0 ? 'ArrowRight' : 'ArrowLeft');
-    else         sendKey(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+
+    // 否則當作「點擊序列」→ 雙擊=攻擊，否則延遲觸發掃描
+    handleTap(t);
+    G.active = false;
   }
 
-  function detectDoubleTap(t){
+  function handleTap(t){
     const now = performance.now();
-    const dt = now - GESTURE.lastTapTime;
-    const dd = Math.max(
-      Math.abs(t.clientX - GESTURE.lastTapX),
-      Math.abs(t.clientY - GESTURE.lastTapY)
-    );
-    GESTURE.lastTapTime = now;
-    GESTURE.lastTapX = t.clientX;
-    GESTURE.lastTapY = t.clientY;
+    const dt  = now - G.lastTapTime;
+    const dd  = Math.max(Math.abs(t.clientX - G.lastTapX), Math.abs(t.clientY - G.lastTapY));
 
-    if (dt <= GESTURE.dblTime && dd <= GESTURE.dblDist){
-      sendKey('Enter');
-      GESTURE.lastTapTime = 0;
+    // 記錄這次點擊
+    G.lastTapTime = now;
+    G.lastTapX = t.clientX;
+    G.lastTapY = t.clientY;
+
+    // 若在雙擊門檻內 → 立刻攻擊，並取消單擊掃描
+    if (dt <= G.dblTime && dd <= G.dblDist){
+      clearSingleTap();
+      act('Enter');        // 雙擊 = 攻擊
+      G.lastTapTime = 0;   // 重置，避免三連擊誤判
+      return;
     }
+
+    // 否則安排單擊 → 掃描（等雙擊時間過了再執行）
+    clearSingleTap();
+    G.singleTapTimer = setTimeout(()=>{
+      act('Scan');         // 單擊 = 掃描
+      G.singleTapTimer = null;
+    }, G.dblTime + 10);
   }
 
-  // ✅ 更穩的觸控判斷 + 直接綁在 document（而不是 window）
+  function clearSingleTap(){
+    if (G.singleTapTimer){ clearTimeout(G.singleTapTimer); G.singleTapTimer = null; }
+  }
+
+  // ✅ 更穩的觸控判斷 + 綁在 document（全頁有效）
   const supportsTouch =
     ('ontouchstart' in window) ||
     (navigator.maxTouchPoints && navigator.maxTouchPoints > 0) ||
@@ -392,20 +404,17 @@
       toggleBtn.textContent = on ? '控制：開啟' : '控制：自動';
     });
 
-    // D-Pad/Enter 事件 → 送鍵
-    function hookPad(root){
-      root?.addEventListener('click', (e)=>{
+    // 讓 D-pad / ENTER 鈕用 act 觸發
+    function wireSrPad(){
+      const dpad = document.getElementById('srDpad');
+      const enterPad = document.getElementById('srEnter');
+      const hook = (root)=> root?.addEventListener('click', (e)=>{
         const btn = e.target.closest('button[data-key]'); if(!btn) return;
-        const key = btn.getAttribute('data-key');
-        sendKey(key);
+        act(btn.getAttribute('data-key'));
       });
-      // 讓 Enter/Space 啟動時也能作用（鍵盤或 SR 雙擊會轉成 click）
-      root?.addEventListener('keydown', (e)=>{
-        const btn = e.target.closest('button[data-key]'); if(!btn) return;
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
-      });
+      hook(dpad); hook(enterPad);
     }
-    hookPad(dpad); hookPad(enterPad);
+    wireSrPad();
 
     // 你也可以在切換「養貓對話」、「測驗視窗」時，暫時自動開/關疊層：
     window.addEventListener('quiz-open',  ()=> showOverlay());   // 測驗期間建議用按鈕操作
