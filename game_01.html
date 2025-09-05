@@ -241,6 +241,29 @@
   <script src="js/core/retry.js"></script>
   <script> Retry.rememberLevel(); </script>
 
+    <!-- SR 專用控制疊層（VoiceOver/TalkBack） -->
+  <div id="srControlOverlay" aria-hidden="false" aria-label="觸控控制面板">
+    <div id="srDpad" class="pad" role="group" aria-label="方向操作">
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowUp"    aria-label="向上">↑</button>
+      <span class="empty" aria-hidden="true"></span>
+
+      <button type="button" data-key="ArrowLeft"  aria-label="向左">←</button>
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowRight" aria-label="向右">→</button>
+
+      <span class="empty" aria-hidden="true"></span>
+      <button type="button" data-key="ArrowDown"  aria-label="向下">↓</button>
+      <span class="empty" aria-hidden="true"></span>
+    </div>
+
+    <div id="srEnter" class="pad" role="group" aria-label="確認動作">
+      <button type="button" data-key="Enter" aria-label="確認">ENTER</button>
+    </div>
+  </div>
+
+  <button id="srToggle" type="button" aria-pressed="false" aria-label="切換觸控控制面板">控制：自動</button>
+
   <!-- 鍵盤初始化（boot 完成/或 game-ready 後） -->
   <script>
     document.addEventListener('game-ready', () => {
@@ -251,6 +274,139 @@
         activeGuardFn: () => window.gameActive !== false
       });
     }, { once:true });
+  </script>
+  
+  <script>
+  (function(){
+    const stage = document.getElementById('gameArea');
+
+    // ===== 共用：往遊戲送「鍵盤事件」的工具 =====
+    function sendKey(key){
+      // 盡量把事件送到舞台，讓既有 Keys 模組接手
+      const ev = new KeyboardEvent('keydown', { key, bubbles:true, cancelable:true });
+      stage?.dispatchEvent(ev);
+      // 若你的 Keys 掛在 document，也多送一份
+      document.dispatchEvent(ev);
+    }
+
+    // ===== 1) 非螢幕閱讀器情境：整頁手勢（滑動移動、雙擊 Enter） =====
+    const GESTURE = {
+      active: false,
+      startX: 0, startY: 0, lastTapTime: 0, lastTapX: 0, lastTapY: 0,
+      threshold: 24,          // 最小滑動距離（px）
+      edge: 10,               // 安全邊界：避免太貼邊誤觸
+      dblTime: 280,           // 雙擊最大間隔（ms）
+      dblDist: 24             // 雙擊兩點最大距離（px）
+    };
+
+    function isInSafeArea(x, y){
+      const w = window.innerWidth, h = window.innerHeight;
+      const e = GESTURE.edge;
+      return (x>e && x<w-e && y>e && y<h-e);
+    }
+    function isInteractiveTarget(el){
+      // 避免在對話框、選單、按鈕上攔截：尊重 UI 點擊
+      return !!el.closest?.('#catDialog:not([hidden]), #weaponMenu, button, a, input, select, textarea, [role="button"], [role="dialog"]');
+    }
+
+    function onTouchStart(e){
+      if (!window.gameActive && window.gameActive!==undefined) return;
+      const t = e.changedTouches?.[0]; if(!t) return;
+      if (!isInSafeArea(t.clientX, t.clientY)) return;
+      if (isInteractiveTarget(e.target)) return;   // 讓按鈕自己處理
+      GESTURE.active = true;
+      GESTURE.startX = t.clientX;
+      GESTURE.startY = t.clientY;
+    }
+    function onTouchEnd(e){
+      const t = e.changedTouches?.[0]; if(!t) return;
+      if (!GESTURE.active) {
+        // 仍可做雙擊判斷（輕觸）
+        detectDoubleTap(t);
+        return;
+      }
+      GESTURE.active = false;
+
+      const dx = t.clientX - GESTURE.startX;
+      const dy = t.clientY - GESTURE.startY;
+      const ax = Math.abs(dx), ay = Math.abs(dy);
+      if (ax < GESTURE.threshold && ay < GESTURE.threshold){
+        // 視為「點一下」結束 → 用於雙擊判斷
+        detectDoubleTap(t);
+        return;
+      }
+      // 判定方向（X/Y 取較大者）
+      if (ax > ay) sendKey(dx>0 ? 'ArrowRight' : 'ArrowLeft');
+      else         sendKey(dy>0 ? 'ArrowDown'  : 'ArrowUp');
+    }
+
+    function detectDoubleTap(t){
+      const now = performance.now();
+      const dt  = now - GESTURE.lastTapTime;
+      const dx  = Math.abs(t.clientX - GESTURE.lastTapX);
+      const dy  = Math.abs(t.clientY - GESTURE.lastTapY);
+      GESTURE.lastTapTime = now;
+      GESTURE.lastTapX = t.clientX;
+      GESTURE.lastTapY = t.clientY;
+
+      if (dt <= GESTURE.dblTime && Math.max(dx,dy) <= GESTURE.dblDist){
+        // 雙擊 → Enter
+        sendKey('Enter');
+        // 重置避免三連擊誤判
+        GESTURE.lastTapTime = 0;
+      }
+    }
+
+    // 僅在觸控環境掛載（桌機滑鼠不需要）
+    const isTouch = matchMedia('(hover: none) and (pointer: coarse)').matches;
+    if (isTouch) {
+      window.addEventListener('touchstart', onTouchStart, { passive:true });
+      window.addEventListener('touchend',   onTouchEnd,   { passive:true });
+    }
+
+    // ===== 2) 螢幕閱讀器情境：顯示 SR 控制疊層（可聚焦按鈕） =====
+    // 無法直接偵測「SR 是否開啟」，所以提供：
+    //  (a) 启发式：若按鈕被聚焦/雙擊有效，我們保持疊層顯示
+    //  (b) 手動切換：srToggle
+    const overlay = document.getElementById('srControlOverlay');
+    const dpad = document.getElementById('srDpad');
+    const enterPad = document.getElementById('srEnter');
+    const toggleBtn = document.getElementById('srToggle');
+
+    function showOverlay(){ document.body.classList.add('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','true'); toggleBtn.textContent = '控制：開啟'; }
+    function hideOverlay(){ document.body.classList.remove('show-sr-overlay'); toggleBtn.setAttribute('aria-pressed','false'); toggleBtn.textContent = '控制：自動'; }
+
+    // 預設策略：
+    //  - 若偵測到螢幕閱讀器可能攔截滑動（玩家抱怨移不動），可以按右上角「控制：自動」手動開啟
+    toggleBtn?.addEventListener('click', ()=>{
+      const on = document.body.classList.toggle('show-sr-overlay');
+      toggleBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+      toggleBtn.textContent = on ? '控制：開啟' : '控制：自動';
+    });
+
+    // D-Pad/Enter 事件 → 送鍵
+    function hookPad(root){
+      root?.addEventListener('click', (e)=>{
+        const btn = e.target.closest('button[data-key]'); if(!btn) return;
+        const key = btn.getAttribute('data-key');
+        sendKey(key);
+      });
+      // 讓 Enter/Space 啟動時也能作用（鍵盤或 SR 雙擊會轉成 click）
+      root?.addEventListener('keydown', (e)=>{
+        const btn = e.target.closest('button[data-key]'); if(!btn) return;
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+      });
+    }
+    hookPad(dpad); hookPad(enterPad);
+
+    // 你也可以在切換「養貓對話」、「測驗視窗」時，暫時自動開/關疊層：
+    window.addEventListener('quiz-open',  ()=> showOverlay());   // 測驗期間建議用按鈕操作
+    window.addEventListener('quiz-close', ()=> hideOverlay());
+
+    // 若你想「自動判斷 SR 可能開啟 → 顯示疊層」，
+    // 可以觀察使用者嘗試滑動卻 5 秒內沒有任何移動成功事件，再自動 showOverlay()。
+    // 這裡先留介面（避免誤判），保守交由玩家手動切換。
+  })();
   </script>
 
   <!-- A11Y 初始化 -->
