@@ -279,11 +279,25 @@
 (function(){
   const stage = document.getElementById('gameArea');
 
+  let lastSentAt = 0;
+  function sendKeyThrottled(key){
+    const now = performance.now();
+    if (now - lastSentAt < 60) return; // 60ms 內的第二發忽略
+    lastSentAt = now;
+    sendKey(key);
+  }
+
   // ===== 往 Keys 模組送鍵 =====
-  function sendKey(key){
-    const ev = new KeyboardEvent('keydown', { key, bubbles:true, cancelable:true });
+  function sendKeyThrottled(key){
+    // 只送給舞台，不要再送 document
+    const ev = new KeyboardEvent('keydown', {
+      key,
+      bubbles: false,          // 避免再冒泡到 document 造成第二次處理
+      cancelable: true
+    });
+    // 確保舞台有焦點（有些 Keys 需要焦點才吃）
+    if (stage && typeof stage.focus === 'function') stage.focus();
     stage?.dispatchEvent(ev);
-    document.dispatchEvent(ev);
   }
 
   // ===== 全螢幕手勢參數 =====
