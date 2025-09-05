@@ -356,5 +356,15 @@ body.show-sr-overlay #srControlOverlay{ display:block; }
   pointer-events: none;  /* 不攔截一般玩家的點擊/滑動 */
   display: block;        /* 永遠存在，才能被聚焦 */
 }
+/* 切換模式專用 */
+#btnModeToggle {
+  background: #84C1FF !important; /* 淺藍 */
+  color: #000000 !important;
+  font-weight: 700;
+}
 
-
+/* 聚焦 / hover 再更亮 */
+#btnModeToggle:hover,
+#btnModeToggle:focus {
+  background: #46A3FF !important; /* 更暗的藍 */
+}

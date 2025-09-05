@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>第 1 關：戰鬥開始！ - 進擊的蟑螂</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no" />
 
   <link rel="stylesheet" href="style.css" />
@@ -203,6 +204,13 @@
   <!-- 手機：武器浮動按鈕 + 子選單 -->
   <button id="weaponToggle" aria-label="武器選單" aria-haspopup="menu" aria-expanded="false">⚔️</button>
   <div id="weaponMenu" role="menu" aria-label="武器選單">
+    <button role="menuitem"
+        id="btnModeToggle"
+        aria-keyshortcuts="Shift+M"
+        title="切換視覺/純聽覺模式（等同 Shift+M）">
+      👁️ 切換模式
+    </button>
+
     <button role="menuitem" data-wpn="fire"    aria-keyshortcuts="1">1️⃣ 噴火槍</button>
     <button role="menuitem" data-wpn="spray"   aria-keyshortcuts="2">2️⃣ 香氛噴霧</button>
     <button role="menuitem" data-wpn="slipper" aria-keyshortcuts="3">3️⃣ 藍白拖</button>
@@ -508,6 +516,7 @@
     Modes.applyModeOnLoad();
     Modes.bindQuickToggle();
   </script>
+
   <!-- 手機：武器浮動選單控制 -->
   <script>
   (function(){
@@ -540,6 +549,57 @@
       menu.querySelector(`button[data-wpn="${id}"]`)?.removeAttribute('disabled');
     });
   })();
+
+    (function(){
+      const btn = document.getElementById('btnModeToggle');
+      const menu = document.getElementById('weaponMenu');
+      const toggle = document.getElementById('weaponToggle');
+
+      function closeMenu(){
+        if (!menu) return;
+        menu.style.display = 'none';
+        toggle?.setAttribute('aria-expanded','false');
+      }
+
+      btn?.addEventListener('click', ()=>{
+        // 派送與桌機相同的快捷鍵：Shift+M
+        const ev = new KeyboardEvent('keydown', {
+          key: 'M',
+          shiftKey: true,
+          bubbles: true,
+          cancelable: true
+        });
+        document.dispatchEvent(ev);
+
+        // 關掉選單、回到遊戲
+        closeMenu();
+
+        // 小延遲把焦點補回全畫面攻擊鈕，維持「雙擊=攻擊」的一致體驗
+        setTimeout(()=> document.getElementById('srAttackFull')?.focus({ preventScroll:true }), 50);
+      });
+    })();
+
+    (function(){
+      const toggle = document.getElementById('weaponToggle');
+      if (!toggle) return;
+
+      let pressTimer = null;
+      const HOLD_MS = 700;
+
+      function fireToggleMode(){
+        const ev = new KeyboardEvent('keydown', { key:'M', shiftKey:true, bubbles:true, cancelable:true });
+        document.dispatchEvent(ev);
+        setTimeout(()=> document.getElementById('srAttackFull')?.focus({ preventScroll:true }), 50);
+      }
+
+      toggle.addEventListener('touchstart', ()=>{ pressTimer = setTimeout(fireToggleMode, HOLD_MS); }, { passive:true });
+      toggle.addEventListener('touchend',   ()=>{ clearTimeout(pressTimer); pressTimer=null; }, { passive:true });
+      toggle.addEventListener('touchmove',  ()=>{ clearTimeout(pressTimer); pressTimer=null; }, { passive:true });
+      // 也支援滑鼠長按（桌機測試用）
+      toggle.addEventListener('mousedown',  ()=>{ pressTimer = setTimeout(fireToggleMode, HOLD_MS); });
+      toggle.addEventListener('mouseup',    ()=>{ clearTimeout(pressTimer); pressTimer=null; });
+      toggle.addEventListener('mouseleave', ()=>{ clearTimeout(pressTimer); pressTimer=null; });
+    })();
   </script>
 
   <!-- SR live region 噪音門 -->

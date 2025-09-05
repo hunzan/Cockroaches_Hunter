@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>第二關介紹 - 主臥室</title>
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <link rel="stylesheet" href="style.css" />
   <script>window.ASSETS_ROOT = "/";</script>
@@ -86,30 +87,40 @@
       .cta-fixed #startBtn{ width:100%; }
     }
 
-    /* Skip links */
-    .skip-link{
-      position:fixed; left:12px; top:10px;
-      transform:translateY(-150%);
-      background:#000; color:#fff;
-      padding:.5rem .75rem; border-radius:10px;
-      border:2px solid var(--accent);
-      box-shadow:0 4px 18px rgba(0,0,0,.45);
-      z-index:10000;
-      transition:transform .18s ease, box-shadow .18s ease;
-    }
-    .skip-link:focus, .skip-link:focus-visible{
-      transform:translateY(0); outline:none;
-      box-shadow:0 6px 24px rgba(0,0,0,.6);
+  /* 1) 預設：視覺隱藏（仍可被 SR 看見、可聚焦） */
+  .skip-link{
+    position:absolute !important;
+    width:1px; height:1px;
+    padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0);
+    white-space:nowrap; border:0;
+  }
+
+  /* 2) 取得焦點：才顯示並定位在左上角 */
+  .skip-link:focus,
+  .skip-link:focus-visible{
+    position:fixed !important;
+    left:12px;
+    top:12px;         /* 第二顆你已內聯 top:56px 會覆蓋這裡，OK */
+    z-index:10000;
+    clip:auto; width:auto; height:auto; overflow:visible;
+    padding:.5rem .75rem; margin:0; white-space:normal; border:2px solid var(--accent);
+    border-radius:10px;
+    background:#000; color:#fff;
+    box-shadow:0 6px 24px rgba(0,0,0,.6);
+  }
+    @media (hover:none) {
+    .skip-link{ /* 保持 SR 可聚焦即可，視覺仍隱藏 */ }
     }
 
-    /* 焦點可見 */
-    [tabindex="-1"]:focus, section:focus, #startBtn:focus{
-      outline:3px solid var(--accent); outline-offset:2px;
+    /* 焦點可見（鍵盤） */
+    [tabindex="-1"]:focus, section:focus, #startBtn:focus {
+      outline: 3px solid var(--accent); outline-offset: 2px;
     }
 
-    /* 視覺隱藏（SR） */
-    .sr-only{
-      position:absolute!important; width:1px; height:1px; padding:0; margin:-1px;
+    /* 視覺隱藏（給 SR） */
+    .sr-only {
+      position:absolute!important; width:1px;height:1px;padding:0;margin:-1px;
       overflow:hidden; clip:rect(0,0,1px,1px); white-space:nowrap; border:0;
     }
   </style>
