@@ -279,16 +279,8 @@
 (function(){
   const stage = document.getElementById('gameArea');
 
-  let lastSentAt = 0;
-  function sendKeyThrottled(key){
-    const now = performance.now();
-    if (now - lastSentAt < 60) return; // 60ms 內的第二發忽略
-    lastSentAt = now;
-    sendKey(key);
-  }
-
   // ===== 往 Keys 模組送鍵 =====
-  function sendKeyThrottled(key){
+  function sendKey(key){
     // 只送給舞台，不要再送 document
     const ev = new KeyboardEvent('keydown', {
       key,
