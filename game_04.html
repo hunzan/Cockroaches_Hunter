@@ -234,6 +234,8 @@
   window.addEventListener('quiz-close', () => { window.gameActive = true;  });
   </script>
 
+  <script type="module" src="./js/core/input-adapter.js"></script>
+
   <!-- 這關啟動（設定 7×7、障礙、開場→spawnBug） -->
   <script src="js/boot/game_l4.js"></script>
 
@@ -690,6 +692,10 @@
     // 延遲到下一輪，確保 DOM 都在（貼紙通常是 runtime 加進來）
     setTimeout(installObservers, 0);
   })();
+  </script>
+  <script type="module">
+    import { mountDesktopKeymap } from "./js/core/input-desktop.js";
+    const unbind = mountDesktopKeymap(document);
   </script>
 </body>
 </html>

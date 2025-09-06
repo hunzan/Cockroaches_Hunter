@@ -550,6 +550,8 @@
   })();
   </script>
 
+  <script type="module" src="./js/core/input-adapter.js"></script>
+
   <!-- 啟動腳本（第 5 關） -->
   <script src="js/boot/game_l5.js"></script>
 
@@ -822,6 +824,10 @@
       if (G.state?.weapon==='cat' && !G.state?.catOwned) { openCatPicker?.(); e.preventDefault(); }
     });
   })();
+  </script>
+  <script type="module">
+    import { mountDesktopKeymap } from "./js/core/input-desktop.js";
+    const unbind = mountDesktopKeymap(document);
   </script>
 </body>
 </html>

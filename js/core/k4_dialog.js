@@ -1,6 +1,7 @@
 /* =============================================
- * js/core/k4_dialog.js — L4/L5 compatible
- *  - Uses game.* APIs (pause/resume/resolve)
+ * js/core/k4_dialog.js — L4/L5 compatible (fixed)
+ *  - Esc 放棄：不扣血、不判失敗；延遲恢復計時
+ *  - 全鍵盤可用：初始焦點、Tab 循環、Enter/Esc 在對話層攔下
  *  - Works with various quiz global names
  *  - Exports bindK4Trigger(game), bindQuizHandlers(game)
  * ============================================= */
@@ -12,19 +13,19 @@
   // 取用遊戲實例
   const getGame = () => w.game;
 
-      // 是否為 K4 且尚未問過
-    function isK4NotAsked(G = getGame()) {
-      const b = G?.state?.bug;
-      const ok = !!(b && b.id === 'k4' && !b._quizAsked);
-      if (!ok) return false;
-      // ✅ 需要 Core 回報尚未達題數上限
-      if (G && typeof G.k4CanAskMore === 'function') {
-        return G.k4CanAskMore(G.state?.level);
-      }
-      return true;
+  // 是否為 K4 且尚未問過
+  function isK4NotAsked(G = getGame()) {
+    const b = G?.state?.bug;
+    const ok = !!(b && b.id === 'k4' && !b._quizAsked);
+    if (!ok) return false;
+    // ✅ 需要 Core 回報尚未達題數上限
+    if (G && typeof G.k4CanAskMore === 'function') {
+      return G.k4CanAskMore(G.state?.level);
     }
+    return true;
+  }
 
-    // ====== 題庫整合：取得題庫 & 挑一題不重複 ======
+  // ====== 題庫整合：取得題庫 & 挑一題不重複 ======
   function getAnyQuestionPool(quizLib) {
     // 優先使用 quizLib 提供的池
     if (quizLib?.getPool && typeof quizLib.getPool === 'function') {
@@ -85,6 +86,8 @@
         zIndex: '9998',
       });
 
+      try { document.body.inert = true; } catch(_) {}
+
       const panel = document.createElement('div');
       Object.assign(panel.style, {
         minWidth: 'min(90vw,480px)',
@@ -108,7 +111,7 @@
 
       const p = document.createElement('p');
       p.id = 'k4DialogDesc';
-      p.textContent = '是否接受挑戰？（Enter 接受 / Esc 拒絕）';
+      p.textContent = '是否接受挑戰？（Enter 接受 / Esc 放棄）';
 
       panel.setAttribute('aria-labelledby', 'k4DialogTitle');
       panel.setAttribute('aria-describedby', 'k4DialogDesc');
@@ -123,7 +126,7 @@
 
       const cancel = document.createElement('button');
       cancel.type = 'button';
-      cancel.textContent = '拒絕（Esc）';
+      cancel.textContent = '放棄（Esc）';
 
       const styleBtn = (b, primary) => {
         b.style.padding = '12px 14px';
@@ -148,33 +151,63 @@
       overlay.append(panel);
       container.append(overlay);
 
-      panel.tabIndex = -1;
-      panel.focus({ preventScroll: true });
+      ok.tabIndex = 0;
+      cancel.tabIndex = 0;
+      ok.focus({ preventScroll: true });
 
       // 通知開啟（同步旗標 + 暫停）
       w.__k4Open = true;
       try { document.dispatchEvent(new CustomEvent('k4:open')); } catch (_) {}
 
       // aria-live 提示
-      live.textContent = '軍師蟑到爆出現，按 Enter 開始答題或 Esc 拒絕。';
+      live.textContent = '軍師蟑到爆出現，按 Enter 開始答題或 Esc 放棄。';
 
       const finish = (val) => {
         w.removeEventListener('keydown', onKey, true);
         // 移焦避免 aria-hidden 警告
         document.getElementById('srStatus')?.focus?.();
         overlay.remove();
+        try { document.body.inert = false; } catch(_) {}
 
         // 通知關閉（旗標稍後由外層統一關）
         try { document.dispatchEvent(new CustomEvent('k4:close')); } catch (_) {}
         resolve(val);
       };
+
       ok.onclick = () => finish('quiz');
       cancel.onclick = () => finish('cancel');
 
       const onKey = (e) => {
-        if (e.code === 'Enter') { ok.click(); e.preventDefault(); }
-        else if (e.code === 'Escape') { cancel.click(); e.preventDefault(); }
+        // 對話開啟期間，關鍵鍵在此被處理並阻止冒泡
+        if (e.code === 'Enter') {
+          e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+          ok.click();
+          return;
+        }
+        if (e.code === 'Escape') {
+          e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+          cancel.click();
+          return;
+        }
+        // Space：若焦點在按鈕上，允許原生行為（啟動按鈕）
+        if (e.code === 'Space') {
+          // 讓 button 的原生 Space 觸發 click，但避免傳到遊戲層
+          if (document.activeElement === ok || document.activeElement === cancel) {
+            e.stopImmediatePropagation(); e.stopPropagation();
+          }
+          return;
+        }
+        // 確保 Tab 在兩顆按鈕之間循環（簡易 focus trap）
+        if (e.code === 'Tab') {
+          const focusables = [ok, cancel];
+          const idx = focusables.indexOf(document.activeElement);
+          const next = (idx + (e.shiftKey ? -1 : 1) + focusables.length) % focusables.length;
+          focusables[next].focus();
+          e.preventDefault(); e.stopImmediatePropagation(); e.stopPropagation();
+        }
       };
+
+      // 用捕獲階段綁定，確保優先攔下
       w.addEventListener('keydown', onKey, true);
 
       if (enableTTS && 'speechSynthesis' in w) {
@@ -217,8 +250,27 @@
     const action = await showK4ChoiceDialog({ container, enableTTS: true });
 
     if (action !== 'quiz') {
-      try { G.resumeTimer?.(); } catch (_) {}
-      try { if (game?.state?.bug?.id === 'k4') game.state.bug._quizDeclined = true; } catch(_){}
+      // 玩家選擇放棄：不視為失敗，不扣血，可在時間內再找牠用毒餌
+      try {
+        if (G?.state?.bug?.id === 'k4') G.state.bug._quizDeclined = true;
+        // ✅ 播放語音提示
+        if (typeof window.speak === 'function') {
+          window.speak('已放棄挑戰');
+        } else if ('speechSynthesis' in window) {
+          const u = new SpeechSynthesisUtterance('已放棄挑戰');
+          const zh = (speechSynthesis.getVoices() || []).find(v => (v.lang || '').toLowerCase().startsWith('zh'));
+          if (zh) u.voice = zh;
+          u.lang = zh?.lang || 'zh-TW';
+          speechSynthesis.cancel();
+          speechSynthesis.speak(u);
+        }
+
+        // 直接恢復計時
+        setTimeout(() => { try { G.resumeTimer?.(); } catch(_) {} }, 0);
+
+        document.dispatchEvent(new CustomEvent('k4:declined', { detail: { level: G.state?.level }}));
+      } catch(_) {}
+
       return { action: 'cancel' };
     }
 
@@ -242,17 +294,15 @@
     let result;
     try {
       if (q) {
-        // 1) 多數情況：題庫支援 presetQuestion
         result = await quizLib.ask({
           container,
           randomize: true,
           timeLimitSec: 60,
-          presetQuestion: q,          // ★建議支援
-          question: q,                // 兼容命名
-          fixedQuestion: q,           // 兼容命名
+          presetQuestion: q,
+          question: q,
+          fixedQuestion: q,
         });
       } else {
-        // 找不到題庫時也不讓流程卡死
         result = await quizLib.ask({
           container,
           randomize: true,
@@ -311,7 +361,7 @@
     const outcome = await w.openK4QuizNow({ container: document.body, game: G });
 
     if (!outcome || outcome.action !== 'quiz') {
-      // 關閉或拒絕：不重問
+      // 關閉或放棄：不重問
       return;
     }
 
@@ -360,9 +410,7 @@
   }
 
   function bindQuizHandlers(game) {
-    // 目前主流程都在 showK4ChoiceDialog 內處理了
-    // 這裡保留擴充點（若你 L4 有額外鍵盤/按鈕處理，可補在此）
-    // 也做個 no-op 以符合呼叫端預期
+    // 擴充點（需要時補）
     return;
   }
 

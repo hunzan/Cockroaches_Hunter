@@ -247,8 +247,9 @@
         container.append(overlay);
 
         // 先聚焦面板讓 SR 讀整段，再移到第一個選項
-        panel.tabIndex = -1;
-        panel.focus({ preventScroll: true });
+        ok.tabIndex = 0;
+        cancel.tabIndex = 0;
+        ok.focus({ preventScroll: true });
         setTimeout(() => { btns[0]?.focus(); }, 30);
 
         // ===== 建立「朗讀選項用」的文本 =====

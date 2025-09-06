@@ -1811,4 +1811,14 @@
     g.changeWeapon('cat');
   };
 
+  window.syncVoteChoicesLock = function(level){
+    const ok = Number(level) === 5;
+    ['voteK1','voteK2','voteK3'].forEach(id => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.disabled = !ok;
+      el.setAttribute('aria-disabled', String(!ok));
+      el.title = ok ? '' : '第 5 關才可用';
+    });
+  };
 })(window);

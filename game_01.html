@@ -244,6 +244,8 @@
   <script src="js/a11y/announce-arbiter.js"></script>
   <script src="js/a11y/spawn-conductor.js"></script>
 
+  <script type="module" src="./js/core/input-adapter.js"></script>
+
   <script src="js/boot/game_l1.js"></script>
   <script src="js/core/keys.js"></script>
   <script src="js/core/retry.js"></script>
@@ -617,6 +619,10 @@
     w.addEventListener?.('quiz-close', unmute);
     w.addEventListener?.('beforeunload', unmute);
   })(window);
+  </script>
+  <script type="module">
+    import { mountDesktopKeymap } from "./js/core/input-desktop.js";
+    const unbind = mountDesktopKeymap(document);
   </script>
 </body>
 </html>
