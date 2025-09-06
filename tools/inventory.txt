@@ -1,0 +1,28 @@
+# ASSETS SIZE REPORT
+Root: C:\Users\hunza\PycharmProjects\Cockroach_Hunter
+Scanned: assets
+
+Total files: 127
+Total size:  140.05 MB
+
+## Top 20 Largest Files
+01. assets\images\hunters\chinaikhun.png  -  9.97 MB (10459248 B)
+02. assets\images\hunters\holah.png  -  9.50 MB (9959471 B)
+03. assets\sounds\tutorial_theme.mp3  -  5.59 MB (5866747 B)
+04. assets\sounds\start_theme.mp3  -  4.28 MB (4491821 B)
+05. assets\images\cockroaches\k5.png  -  4.11 MB (4308203 B)
+06. assets\sounds\tutorial_theme.ogg  -  3.97 MB (4159776 B)
+07. assets\images\cockroaches\k3.png  -  3.68 MB (3855145 B)
+08. assets\images\cockroaches\k4.png  -  3.65 MB (3831542 B)
+09. assets\images\cockroaches\holiroach.png  -  3.57 MB (3739779 B)
+10. assets\images\start_bg.png  -  3.41 MB (3570722 B)
+11. assets\sounds\start_theme.ogg  -  3.38 MB (3549149 B)
+12. assets\images\cockroaches\holy.jpeg  -  3.17 MB (3329183 B)
+13. assets\images\cockroaches\k2.png  -  3.17 MB (3320520 B)
+14. assets\images\cockroaches\k1.png  -  3.02 MB (3161897 B)
+15. assets\images\weapons\slipper.png  -  2.69 MB (2819358 B)
+16. assets\sounds\game_04.mp3  -  2.58 MB (2707791 B)
+17. assets\images\cockroaches\girl.jpeg  -  2.52 MB (2647047 B)
+18. assets\images\cockroaches\supersaia.png  -  2.41 MB (2528064 B)
+19. assets\sounds\game_01.mp3  -  2.38 MB (2495923 B)
+20. assets\images\win_bg.png  -  2.36 MB (2472992 B)
