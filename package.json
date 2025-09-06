@@ -2,8 +2,8 @@
   "name": "bug-slayer",
   "private": true,
   "scripts": {
-    "start": "serve -s -l $PORT .",
-    "serve": "serve -s -l 8080 .",
+    "start": "serve -l $PORT .",
+    "serve": "serve -l 8080 .",
     "report:assets": "node tools/size-report.mjs"
   },
   "dependencies": {
